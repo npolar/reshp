@@ -37,20 +37,20 @@ namespace reshp
         {
             enum type
             {
-                null            = 0,    // implemented read, write
-                point           = 1,    // implemented read, write
-                polyline        = 3,    // implemented read, write
-                polygon         = 5,    // implemented read, write
-                multipoint      = 8,    // implemented read, write
-                zpoint          = 11,
-                zpolyline       = 13,
-                zpolygon        = 15,
-                zmultipoint     = 18,
-                mpoint          = 21,
-                mpolyline       = 23,
-                mpolygon        = 25,
-                mmultipoint     = 28,
-                multipatch      = 31
+                null        = 0,    // implemented read, write
+                point       = 1,    // implemented read, write
+                polyline    = 3,    // implemented read, write
+                polygon     = 5,    // implemented read, write
+                multipoint  = 8,    // implemented read, write
+                zpoint      = 11,
+                zpolyline   = 13,
+                zpolygon    = 15,
+                zmultipoint = 18,
+                mpoint      = 21,
+                mpolyline   = 23,
+                mpolygon    = 25,
+                mmultipoint = 28,
+                multipatch  = 31
             };
         };
         
@@ -68,8 +68,9 @@ namespace reshp
             int32_t     num_points; // little
             int32_t*    parts;      // [num_parts]
             shp::point* points;     // [num_points]
-
+            
             polyline();
+            ~polyline();
         };
         
         struct polygon
@@ -79,8 +80,9 @@ namespace reshp
             int32_t     num_points; // little
             int32_t*    parts;      // [num_parts]
             shp::point* points;     // [num_points]
-
+            
             polygon();
+            ~polygon();
         };
         
         struct multipoint
@@ -88,14 +90,15 @@ namespace reshp
             double      box[4];     // little (Xmin, Ymin, Xmax, Ymax)
             int32_t     num_points; // little
             shp::point* points;     // [num_points]
-
+            
             multipoint();
+            ~multipoint();
         };
         
         struct zpoint
         {
             double x, y, z, m;      // little
-
+            
             zpoint(const double x = 0.0, const double y = 0.0, const double z = 0.0, const double m = 0.0);
         };
         
@@ -110,8 +113,9 @@ namespace reshp
             double*     z_array;    // [num_points]
             double      m_range[2]; // little (Mmin, Mmax)
             double*     m_array;    // [num_points]
-
+            
             zpolyline();
+            ~zpolyline();
         };
         
         struct zpolygon
@@ -125,8 +129,9 @@ namespace reshp
             double*     z_array;    // [num_points]
             double      m_range[2]; // little (Mmin, Mmax)
             double*     m_array;    // [num_points]
-
+            
             zpolygon();
+            ~zpolygon();
         };
         
         struct zmultipoint
@@ -138,14 +143,15 @@ namespace reshp
             double*     z_array;    // [num_points]
             double      m_range[2]; // little (Mmin, Mmax)
             double*     m_array;    // [num_points]
-
+            
             zmultipoint();
+            ~zmultipoint();
         };
         
         struct mpoint
         {
             double x, y, m;         // little
-
+            
             mpoint(const double x, const double y, const double m);
         };
         
@@ -158,8 +164,9 @@ namespace reshp
             shp::point* points;     // [num_points]
             double      m_range[2]; // little (Mmin, Mmax)
             double*     m_array;    // [num_points]
-
+            
             mpolyline();
+            ~mpolyline();
         };
         
         struct mpolygon
@@ -171,8 +178,9 @@ namespace reshp
             shp::point* points;     // [num_points]
             double      m_range[2]; // little (Mmin, Mmax)
             double*     m_array;    // [num_points]
-
+            
             mpolygon();
+            ~mpolygon();
         };
         
         struct mmultipoint
@@ -182,8 +190,9 @@ namespace reshp
             shp::point* points;     // [num_points]
             double      m_range[2]; // little (Mmin, Mmax)
             double*     m_array;    // [num_points]
-
+            
             mmultipoint();
+            ~mmultipoint();
         };
         
         struct multipatch
@@ -198,8 +207,9 @@ namespace reshp
             double*     z_array;    // [num_points]
             double      m_range[2]; // little (Mmin, Mmax)
             double*     m_array;    // [num_points]
-
+            
             multipatch();
+            ~multipatch();
         };
         
         struct record
@@ -222,47 +232,29 @@ namespace reshp
             shp::mpolygon*    mpolygon;
             shp::mmultipoint* mmultipoint;
             shp::multipatch*  multipatch;
-
+            
             record();
         };
         
         struct
         {
-            union
-            {
-                char data[100];
-                
-                struct
-                {
-                    int32_t identifier;         // big (0x0000270A)
-                    int32_t unused[5];          // big
-                    int32_t length;             // big (16-bit words)
-                    int32_t version;            // little (1000)
-                    int32_t type;               // little
-                    
-                    struct
-                    {
-                        struct
-                        {
-                            double x, y;        // little
-                        } min, max;
-                    } mbr;
-                    
-                    struct
-                    {
-                        double min, max;        // little
-                    } z, m;
-                };
-            };
+            int32_t identifier;     // big (9994)
+            int32_t unused[5];      // big
+            int32_t length;         // big (16-bit words)
+            int32_t version;        // little (1000)
+            int32_t type;           // little
+            double  box[4];         // little (Xmin, Ymin, Xmax, Ymax)
+            double  z_range[2];     // little (Zmin, Zmax)
+            double  m_range[2];     // little (Mmin, Mmax)
         } header;
+        
+        std::vector<shp::record> records;
         
         ~shp();
         
-        void    free();
-        bool    load(const std::string& filename);
-        bool    save(const std::string& filename);
-        
-        std::vector<shp::record> records;
+        void free();
+        bool load(const std::string& filename);
+        bool save(const std::string& filename);
     };
 }
 

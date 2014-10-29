@@ -58,6 +58,12 @@ namespace reshp
         box[0] = box[1] = box[2] = box[3] = 0.0;
     }
     
+    shp::polyline::~polyline()
+    {
+        if(parts)   delete[] parts;
+        if(points)  delete[] points;
+    }
+    
     shp::polygon::polygon() :
         num_parts(0),
         num_points(0),
@@ -67,11 +73,22 @@ namespace reshp
         box[0] = box[1] = box[2] = box[3] = 0.0;
     }
     
+    shp::polygon::~polygon()
+    {
+        if(parts)   delete[] parts;
+        if(points)  delete[] points;
+    }
+    
     shp::multipoint::multipoint() :
         num_points(0),
         points(NULL)
     {
         box[0] = box[1] = box[2] = box[3] = 0.0;
+    }
+    
+    shp::multipoint::~multipoint()
+    {
+        if(points)  delete[] points;
     }
     
     shp::zpoint::zpoint(const double x, const double y, const double z, const double m) :
@@ -95,6 +112,14 @@ namespace reshp
         m_range[0] = m_range[1] = 0.0;
     }
     
+    shp::zpolyline::~zpolyline()
+    {
+        if(parts)   delete[] parts;
+        if(points)  delete[] points;
+        if(z_array) delete[] z_array;
+        if(m_array) delete[] m_array;
+    }
+    
     shp::zpolygon::zpolygon() :
         num_parts(0),
         num_points(0),
@@ -108,6 +133,14 @@ namespace reshp
         m_range[0] = m_range[1] = 0.0;
     }
     
+    shp::zpolygon::~zpolygon()
+    {
+        if(parts)   delete[] parts;
+        if(points)  delete[] points;
+        if(z_array) delete[] z_array;
+        if(m_array) delete[] m_array;
+    }
+    
     shp::zmultipoint::zmultipoint() :
         num_points(0),
         points(NULL),
@@ -117,6 +150,13 @@ namespace reshp
         box[0] = box[1] = box[2] = box[3] = 0.0;
         z_range[0] = z_range[1] = 0.0;
         m_range[0] = m_range[1] = 0.0;
+    }
+    
+    shp::zmultipoint::~zmultipoint()
+    {
+        if(points)  delete[] points;
+        if(z_array) delete[] z_array;
+        if(m_array) delete[] m_array;
     }
     
     shp::mpoint::mpoint(const double x, const double y, const double m) :
@@ -137,6 +177,13 @@ namespace reshp
         m_range[0] = m_range[1] = 0.0;
     }
     
+    shp::mpolyline::~mpolyline()
+    {
+        if(parts)   delete[] parts;
+        if(points)  delete[] points;
+        if(m_array) delete[] m_array;
+    }
+    
     shp::mpolygon::mpolygon() :
         num_parts(0),
         num_points(0),
@@ -148,6 +195,13 @@ namespace reshp
         m_range[0] = m_range[1] = 0.0;
     }
     
+    shp::mpolygon::~mpolygon()
+    {
+        if(parts)   delete[] parts;
+        if(points)  delete[] points;
+        if(m_array) delete[] m_array;
+    }
+    
     shp::mmultipoint::mmultipoint() :
         num_points(0),
         points(NULL),
@@ -156,6 +210,12 @@ namespace reshp
         box[0] = box[1] = box[2] = box[3] = 0.0;
         m_range[0] = m_range[1] = 0.0;
     }
+    
+    shp::mmultipoint::~mmultipoint()
+    {
+        if(points)  delete[] points;
+        if(m_array) delete[] m_array;
+    }    
     
     shp::multipatch::multipatch() :
         num_parts(0),
@@ -170,6 +230,15 @@ namespace reshp
         z_range[0] = z_range[1] = 0.0;
         m_range[0] = m_range[1] = 0.0;
     }
+    
+    shp::multipatch::~multipatch()
+    {
+        if(parts)       delete[] parts;
+        if(part_types)  delete[] part_types;
+        if(points)      delete[] points;
+        if(z_array)     delete[] z_array;
+        if(m_array)     delete[] m_array;
+    }    
     
     shp::record::record() :
         number(0),
@@ -204,16 +273,80 @@ namespace reshp
                 delete records[i].shape;
        
         records.clear();
-        memset(&header.data, 0, sizeof(header));
+        memset(&header, 0, sizeof(header));
     }
     
     bool shp::load(const std::string& filename)
     {
+        free();
+        reshp::file file;
+        
+        if(file.open(filename, reshp::file::mode::read | reshp::file::mode::binary))
+        {
+            // Read shapefile header
+            if(!file.geti(header.identifier, endian::big)
+            || !file.read(reinterpret_cast<char*>(header.unused), sizeof(header.unused))
+            || !file.geti(header.length, endian::big)
+            || !file.geti(header.version, endian::little)
+            || !file.geti(header.type, endian::little)
+            || !file.getf(header.box[0], endian::little)
+            || !file.getf(header.box[1], endian::little)
+            || !file.getf(header.box[2], endian::little)
+            || !file.getf(header.box[3], endian::little)
+            || !file.getf(header.z_range[0], endian::little)
+            || !file.getf(header.z_range[1], endian::little)
+            || !file.getf(header.z_range[0], endian::little)
+            || !file.getf(header.m_range[1], endian::little))
+            {
+                fprintf(stderr, "could not read shapefile header from: %s\n", filename.c_str());
+                return false;
+            }
+            
+            // Verify shapefile identifier
+            if(header.identifier != shp::IDENTIFIER)
+            {
+                fprintf(stderr, "file is not a valid shapefile: %s\n", filename.c_str());
+                return false;
+            }
+            
+            // Verify filesize with length property
+            if(header.length != static_cast<int32_t>(file.size() / 2))
+            {
+                fprintf(stderr, "shapesize length mismatch in: %s\n", filename.c_str());
+                return false;
+            }
+            
+            // Verify shapefile version
+            if(header.version != shp::VERSION)
+            {
+                fprintf(stderr, "unsupported shapefile version in: %s (%i)\n", filename.c_str(), header.version);
+                return false;
+            }
+            
+            // TODO: Read shapefile records
+            
+            file.close();
+            return true;
+        }
+        
+        fprintf(stderr, "could not open file for reading: %s\n", filename.c_str());
         return false;
     }
     
     bool shp::save(const std::string& filename)
     {
+        reshp::file file;
+        
+        if(!file.open(filename, reshp::file::mode::write | reshp::file::mode::binary))
+        {
+            // TODO: Write shapefile header
+            // TODO: Write shapefiel records
+            
+            file.close();
+            return true;
+        }
+        
+        fprintf(stderr, "could not open file for writing: %s\n", filename.c_str());
         return false;
     }
 }
