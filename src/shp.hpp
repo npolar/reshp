@@ -37,11 +37,11 @@ namespace reshp
         {
             enum type
             {
-                null        = 0,    // implemented read, write
-                point       = 1,    // implemented read, write
-                polyline    = 3,    // implemented read, write
-                polygon     = 5,    // implemented read, write
-                multipoint  = 8,    // implemented read, write
+                null        = 0,    // implemented read
+                point       = 1,    // implemented read
+                polyline    = 3,    // implemented read
+                polygon     = 5,    // implemented read
+                multipoint  = 8,    // implemented read
                 zpoint      = 11,
                 zpolyline   = 13,
                 zpolygon    = 15,
@@ -54,14 +54,14 @@ namespace reshp
             };
         };
         
-        struct point
+        struct point : public shp::shape
         {
             double x, y;            // little
             
             point(const double x = 0.0, const double y = 0.0);
         };
         
-        struct polyline
+        struct polyline : public shp::shape
         {
             double      box[4];     // little (Xmin, Ymin, Xmax, Ymax)
             int32_t     num_parts;  // little
@@ -73,7 +73,7 @@ namespace reshp
             ~polyline();
         };
         
-        struct polygon
+        struct polygon : public shp::shape
         {
             double      box[4];     // little (Xmin, Ymin, Xmax, Ymax)
             int32_t     num_parts;  // little
@@ -85,7 +85,7 @@ namespace reshp
             ~polygon();
         };
         
-        struct multipoint
+        struct multipoint : public shp::shape
         {
             double      box[4];     // little (Xmin, Ymin, Xmax, Ymax)
             int32_t     num_points; // little
@@ -95,14 +95,14 @@ namespace reshp
             ~multipoint();
         };
         
-        struct zpoint
+        struct zpoint : public shp::shape
         {
             double x, y, z, m;      // little
             
             zpoint(const double x = 0.0, const double y = 0.0, const double z = 0.0, const double m = 0.0);
         };
         
-        struct zpolyline
+        struct zpolyline : public shp::shape
         {
             double      box[4];     // little (Xmin, Ymin, Xmax, Ymax)
             int32_t     num_parts;  // little
@@ -118,7 +118,7 @@ namespace reshp
             ~zpolyline();
         };
         
-        struct zpolygon
+        struct zpolygon : public shp::shape
         {
             double      box[4];     // little (Xmin, Ymin, Xmax, Ymax)
             int32_t     num_parts;  // little
@@ -134,7 +134,7 @@ namespace reshp
             ~zpolygon();
         };
         
-        struct zmultipoint
+        struct zmultipoint : public shp::shape
         {
             double      box[4];     // little (Xmin, Ymin, Xmax, Ymax)
             int32_t     num_points; // little
@@ -148,14 +148,14 @@ namespace reshp
             ~zmultipoint();
         };
         
-        struct mpoint
+        struct mpoint : public shp::shape
         {
             double x, y, m;         // little
             
             mpoint(const double x, const double y, const double m);
         };
         
-        struct mpolyline
+        struct mpolyline : public shp::shape
         {
             double      box[4];     // little (Xmin, Ymin, Xmax, Ymax)
             int32_t     num_parts;  // little
@@ -169,7 +169,7 @@ namespace reshp
             ~mpolyline();
         };
         
-        struct mpolygon
+        struct mpolygon : public shp::shape
         {
             double      box[4];     // little (Xmin, Ymin, Xmax, Ymax)
             int32_t     num_parts;  // little
@@ -183,7 +183,7 @@ namespace reshp
             ~mpolygon();
         };
         
-        struct mmultipoint
+        struct mmultipoint : public shp::shape
         {
             double      box[4];     // little (Xmin, Ymin, Xmax, Ymax)
             int32_t     num_points; // little
@@ -195,7 +195,7 @@ namespace reshp
             ~mmultipoint();
         };
         
-        struct multipatch
+        struct multipatch : public shp::shape
         {
             double      box[4];     // little (Xmin, Ymin, Xmax, Ymax)
             int32_t     num_parts;  // little
