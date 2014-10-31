@@ -10,26 +10,21 @@
 |* http://www.npolar.no/ *|
 \* * * * * * * * * * * * */
 
-#ifndef RESHP_SHAPE_POINT_HPP_
-#define RESHP_SHAPE_POINT_HPP_
-
-#include "../shape.hpp"
+#ifndef RESHP_POINT_HPP_
+#define RESHP_POINT_HPP_
 
 namespace reshp
 {
-    struct point : public shape
+    struct segment;
+    
+    struct point
     {
         double x, y, z;
         
         point(const double x = 0.0, const double y = 0.0, const double z = 0.0);
         
-        /* TODO:
-        bool inside(const reshp::shape*) const;
-        bool intersects(const reshp::shape*) const;
-        */
-        
-        void update();
-    };   
+        bool intersects(const reshp::segment&) const;
+    };
 }
 
-#endif // RESHP_SHAPE_POINT_HPP_
+#endif // RESHP_POINT_HPP_

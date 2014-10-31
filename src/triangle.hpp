@@ -10,32 +10,21 @@
 |* http://www.npolar.no/ *|
 \* * * * * * * * * * * * */
 
+#ifndef RESHP_TRIANGLE_HPP_
+#define RESHP_TRIANGLE_HPP_
+
 #include "point.hpp"
 
 namespace reshp
 {
-    point::point(const double x, const double y, const double z) :
-        shape("point"),
-        x(x),
-        y(y),
-        z(z)
+    struct triangle
     {
-    }
-    
-    /* TODO:
-    bool point::inside(const reshp::shape* other) const
-    {
-    }
-    
-    bool point::intersects(const reshp::shape* other) const
-    {
-    }
-    */
-    
-    void point::update()
-    {
-        aabb.min.x = aabb.max.x = x;
-        aabb.min.y = aabb.max.y = y;
-        aabb.min.z = aabb.max.z = z;
-    }
+        reshp::point p1, p2, p3;
+        
+        triangle(const reshp::point&, const reshp::point&, const reshp::point&);
+        
+        int direction() const; // 0: Colinear, 1: Clockwise, -1: Counter-Clockwise
+    };
 }
+
+#endif // RESHP_TRIANGLE_HPP_
