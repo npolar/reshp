@@ -178,7 +178,7 @@ namespace reshp
             {
                 std::string shapefile(argv[i]);
                 
-                if(argcmp(argv[i + 1], "--list", "l"))
+                if(argcmp(argv[i + 1], "--list", "-l"))
                 {
                     handle_list(shapefile);
                 }

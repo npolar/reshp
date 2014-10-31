@@ -37,11 +37,11 @@ namespace reshp
         {
             enum type
             {
-                null        = 0,    // implemented read
-                point       = 1,    // implemented read
-                polyline    = 3,    // implemented read
-                polygon     = 5,    // implemented read
-                multipoint  = 8,    // implemented read
+                null        = 0,    // implemented read, write
+                point       = 1,    // implemented read, write
+                polyline    = 3,    // implemented read, write
+                polygon     = 5,    // implemented read, write
+                multipoint  = 8,    // implemented read, write
                 zpoint      = 11,
                 zpolyline   = 13,
                 zpolygon    = 15,
