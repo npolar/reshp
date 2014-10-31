@@ -218,7 +218,7 @@ namespace reshp
             int32_t     length;     // big (16-bit words)
             int32_t     type;       // little
             
-            shp::shape*       shape;          
+            shp::shape*       shape;
             shp::point*       point;
             shp::polyline*    polyline;
             shp::polygon*     polygon;
