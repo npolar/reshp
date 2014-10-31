@@ -776,7 +776,12 @@ namespace reshp
                     return false;
                 }
                 else filelen += (record.length * 2);
-            }
+            } // records
+            
+            
+            // Rewrite file length in header
+            file.seek(24); // header.length
+            file.puti((header.length = (filelen / 2)), endian::big);
             
             file.close();
             return true;
