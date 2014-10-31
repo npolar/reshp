@@ -250,6 +250,7 @@ namespace reshp
         
         std::vector<shp::record> records;
         
+        shp();
         ~shp();
         
         void free();

@@ -261,6 +261,18 @@ namespace reshp
     {
     }
     
+    shp::shp()
+    {
+        header.identifier = shp::IDENTIFIER;
+        memset(header.unused, 0, sizeof(header.unused));
+        header.length = 50;
+        header.version = shp::VERSION;
+        header.type = shp::shape::null;
+        header.box[0] = header.box[1] = header.box[2] = header.box[3] = 0.0;
+        header.z_range[0] = header.z_range[1] = 0.0;
+        header.m_range[0] = header.m_range[1] = 0.0;
+    }
+    
     shp::~shp()
     {
         free();
@@ -539,8 +551,232 @@ namespace reshp
         
         if(!file.open(filename, reshp::file::mode::write | reshp::file::mode::binary))
         {
-            // TODO: Write shapefile header
-            // TODO: Write shapefile records
+            // Write shapefile header
+            if(!file.puti(header.identifier, endian::big)
+            || !file.write(reinterpret_cast<char*>(header.unused), sizeof(header.unused))
+            || !file.puti(header.length, endian::big)       // Rewritten after writing records to file
+            || !file.puti(header.version, endian::little)
+            || !file.puti(header.type, endian::little)
+            || !file.putf(header.box[0], endian::little)
+            || !file.putf(header.box[1], endian::little)
+            || !file.putf(header.box[2], endian::little)
+            || !file.putf(header.box[3], endian::little)
+            || !file.putf(header.z_range[0], endian::little)
+            || !file.putf(header.z_range[1], endian::little)
+            || !file.putf(header.z_range[0], endian::little)
+            || !file.putf(header.m_range[1], endian::little))
+            {
+                fprintf(stderr, "could not write shapefile header to: %s\n", filename.c_str());
+                return false;
+            }
+            
+            int32_t filelen = 100; // Header size in bytes
+            
+            // Write shapefile records
+            for(unsigned i = 0; i < records.size(); ++i)
+            {
+                reshp::shp::record& record = records[i];
+                int32_t recordlen = 6; // Numer, Length, Type
+                
+                if(!record.length)
+                    record.length = recordlen;
+                
+                if(!record.number)
+                    record.number = (i + 1);
+                
+                if(!file.puti(record.number, endian::big)
+                || !file.puti(record.length, endian::big)
+                || !file.puti(record.type, endian::little))
+                {
+                    fprintf(stderr, "could not write shapefile record header to: %s (index %u)\n", filename.c_str(), i);
+                    return false;
+                }
+                
+                if(record.type == shp::shape::null)
+                {
+                    // Empty shape (no additional data)
+                }
+                else if(record.type == shp::shape::point)
+                {
+                    if(!record.point)
+                    {
+                        fprintf(stderr, "missing record point data for record: #%i\n", record.number);
+                        return false;
+                    }
+                    
+                    if(!file.putf(record.point->x, endian::little)
+                    || !file.putf(record.point->y, endian::little))
+                    {
+                        fprintf(stderr, "could not write point record to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                        return false;
+                    }
+                    else recordlen += 8;
+                }
+                else if(record.type == shp::shape::polyline)
+                {
+                    if(!record.polyline)
+                    {
+                        fprintf(stderr, "missing record polyline data for record: #%i\n", record.number);
+                        return false;
+                    }
+                    
+                    if(!file.putf(record.polyline->box[0], endian::little) // Xmin
+                    || !file.putf(record.polyline->box[1], endian::little) // Ymin
+                    || !file.putf(record.polyline->box[2], endian::little) // Xmax
+                    || !file.putf(record.polyline->box[3], endian::little) // Ymax
+                    || !file.puti(record.polyline->num_parts, endian::little)
+                    || !file.puti(record.polyline->num_points, endian::little))
+                    {
+                        fprintf(stderr, "could not write polyline record to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                        return false;
+                    }
+                    else recordlen += 20;
+                    
+                    if(!record.polyline->parts)
+                    {
+                        fprintf(stderr, "missing parts in polyline record: #%i\n", record.number);
+                        return false;
+                    }
+                    
+                    for(int32_t i = 0; i < record.polyline->num_parts; ++i)
+                    {
+                        int32_t& part = record.polyline->parts[i];
+                        if(!file.puti(part, endian::little))
+                        {
+                            fprintf(stderr, "could not write polyline parts to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                            return false;
+                        }
+                        else recordlen += 2;
+                    }
+                    
+                    if(!record.polyline->points)
+                    {
+                        fprintf(stderr, "missing points in polyline record: #%i\n", record.number);
+                        return false;
+                    }
+                    
+                    for(int32_t i = 0; i < record.polyline->num_points; ++i)
+                    {
+                        shp::point& point = record.polyline->points[i];
+                        if(!file.putf(point.x, endian::little)
+                        || !file.putf(point.y, endian::little))
+                        {
+                            fprintf(stderr, "could not write polyline points to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                            return false;
+                        }
+                        else recordlen += 8;
+                    }
+                }
+                else if(record.type == shp::shape::polygon)
+                {
+                    if(!record.polygon)
+                    {
+                        fprintf(stderr, "missing record polygon data for record: #%i\n", record.number);
+                        return false;
+                    }
+                    
+                    if(!file.putf(record.polygon->box[0], endian::little) // Xmin
+                    || !file.putf(record.polygon->box[1], endian::little) // Ymin
+                    || !file.putf(record.polygon->box[2], endian::little) // Xmax
+                    || !file.putf(record.polygon->box[3], endian::little) // Ymax
+                    || !file.puti(record.polygon->num_parts, endian::little)
+                    || !file.puti(record.polygon->num_points, endian::little))
+                    {
+                        fprintf(stderr, "could not write polygon record to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                        return false;
+                    }
+                    else recordlen += 20;
+                    
+                    if(!record.polygon->parts)
+                    {
+                        fprintf(stderr, "missing parts in polygon record: #%i\n", record.number);
+                        return false;
+                    }
+                    
+                    for(int32_t i = 0; i < record.polygon->num_parts; ++i)
+                    {
+                        int32_t& part = record.polygon->parts[i];
+                        if(!file.puti(part, endian::little))
+                        {
+                            fprintf(stderr, "could not write polygon parts to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                            return false;
+                        }
+                        else recordlen += 2;
+                    }
+                    
+                    if(!record.polygon->points)
+                    {
+                        fprintf(stderr, "missing points in polygon record: #%i\n", record.number);
+                        return false;
+                    }
+                    
+                    for(int32_t i = 0; i < record.polygon->num_points; ++i)
+                    {
+                        shp::point& point = record.polygon->points[i];
+                        if(!file.putf(point.x, endian::little)
+                        || !file.putf(point.y, endian::little))
+                        {
+                            fprintf(stderr, "could not write polygon points to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                            return false;
+                        }
+                        else recordlen += 8;
+                    }
+                }
+                else if(record.type == shp::shape::multipoint)
+                {
+                    if(!record.multipoint)
+                    {
+                        fprintf(stderr, "missing record multipoint data for record: #%i\n", record.number);
+                        return false;
+                    }
+                    
+                    if(!file.putf(record.multipoint->box[0], endian::little) // Xmin
+                    || !file.putf(record.multipoint->box[1], endian::little) // Ymin
+                    || !file.putf(record.multipoint->box[2], endian::little) // Xmax
+                    || !file.putf(record.multipoint->box[3], endian::little) // Ymax
+                    || !file.puti(record.multipoint->num_points, endian::little))
+                    {
+                        fprintf(stderr, "could not write multipoint record to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                        return false;
+                    }
+                    else recordlen += 20;
+                    
+                    if(!record.multipoint->points)
+                    {
+                        fprintf(stderr, "missing points in multipoint record: #%i\n", record.number);
+                        return false;
+                    }
+                    
+                    for(int32_t i = 0; i < record.multipoint->num_points; ++i)
+                    {
+                        shp::point& point = record.multipoint->points[i];
+                        if(!file.putf(point.x, endian::little)
+                        || !file.putf(point.y, endian::little))
+                        {
+                            fprintf(stderr, "could not write multipoint points to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                            return false;
+                        }
+                        else recordlen += 8;
+                    }
+                }
+                else
+                {
+                    fprintf(stderr, "unsupported record type for writing: %s (record #%i)\n", shp::typestr(record.type), record.number);
+                    
+                    char data[record.length * 2];
+                    memset(data, 0, sizeof(data));
+                    
+                    if(!file.write(data, sizeof(data)))
+                        return false;
+                }
+                
+                if(record.length != recordlen)
+                {
+                    fprintf(stderr, "record header length mismatch for record: #%i (%i, expected %i)\n", record.number, record.length, recordlen);
+                    return false;
+                }
+                else filelen += (record.length * 2);
+            }
             
             file.close();
             return true;
