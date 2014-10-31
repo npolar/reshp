@@ -119,7 +119,7 @@ namespace reshp
             success = (::stat(filename.c_str(), &attr) == 0);
         #elif defined(__WIN32)
             struct _stat attr;
-            success = (::_stat(filename, &attr) == 0);
+            success = (::_stat(filename.c_str(), &attr) == 0);
         #endif
             
             if(success)
