@@ -4,7 +4,7 @@ CFLAGS = -Wall -Wextra -Os -ansi
 LFLAGS = 
 SRCDIR = src
 OBJDIR = obj
-SOURCES := $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(SRCDIR)/*/*.cpp)
+SOURCES := $(wildcard $(SRCDIR)/*.cpp)
 OBJECTS := $(SOURCES:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
 
 $(TARGET): $(OBJECTS)
