@@ -52,6 +52,8 @@ namespace reshp
                 mmultipoint = 28,
                 multipatch  = 31
             };
+            
+            virtual ~shape();
         };
         
         struct point : public shp::shape

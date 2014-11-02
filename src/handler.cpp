@@ -31,16 +31,17 @@ namespace reshp
         return false;
     }
     
-    void handler::handle_help(const char* topic)
+    void handler::help(const char* topic)
     {
         if(!topic)
         {
-            printf("Usage: %s [option] [shapefile <parameter>...]\n", exe_name_.c_str());
-            printf("Command-line tool for manipulating Esri Shapefiles.\n");
+            printf("Usage: %s [option]... [shapefile <parameter>...]\n", exe_name_.c_str());
+            printf("Command-line tool for manipulating ESRI Shapefiles.\n");
             
             printf("\nAvailable options:\n");
-            printf("  -h, --help [parameter]            display help text (about specified parameter) and exit\n");
+            printf("  -h, --help [topic]                display help text (about specified topic) and exit\n");
             printf("      --version                     output version information and exit\n");
+            printf("  -v, --verbose                     verbosely output performed manipulation operations\n");
             
             printf("\nShapefile parameters:\n");
             printf("  -a, --add <type> <property>...    add record with specified type and properties to shapefile\n");
@@ -91,14 +92,19 @@ namespace reshp
             printf("%s <shapefile> --subtract <input>\n", exe_name_.c_str());
             printf("Subtract input shapefile shapes from shapes in the shapefile.\n");
         }
+        else if(argcmp(topic, "verbose", "v"))
+        {
+            printf("%s --verbose [shapefile <parameter>...]\n", exe_name_.c_str());
+            printf("Enable verbose output of certain manipulation operations.\n");
+        }
         else
         {
-            printf("Unrecognized parameter: %s\n", topic);
+            printf("Unrecognized help topic: %s\n", topic);
             printf("Try '%s --help' for more information\n", exe_name_.c_str());
         }
     }
     
-    void handler::handle_list(const std::string& shapefile)
+    void handler::list(const std::string& shapefile)
     {
         reshp::shp shp;
         if(!shp.load(shapefile))
@@ -134,6 +140,7 @@ namespace reshp
     handler::handler(int argc, char** argv, const char* version) :
         build_date_("0000-00-00"),
         exe_name_(argv[0]),
+        verbose_(false),
         version_(version)
     {
         size_t separator = exe_name_.rfind('/');
@@ -145,8 +152,8 @@ namespace reshp
         build_date_.replace(0, 4, builddate.substr(7, 4));
         build_date_.replace(8, 2, builddate.substr(4, 2));
         
-        if(build_date_[5] == ' ')
-            build_date_[5] = '0';
+        if(build_date_[8] == ' ')
+            build_date_[8] = '0';
         
              if(builddate.substr(0, 3) == "Jan") build_date_.replace(5, 2, "01");
         else if(builddate.substr(0, 3) == "Feb") build_date_.replace(5, 2, "02");
@@ -161,40 +168,70 @@ namespace reshp
         else if(builddate.substr(0, 3) == "Nov") build_date_.replace(5, 2, "11");
         else if(builddate.substr(0, 3) == "Dec") build_date_.replace(5, 2, "12");
         
-        for(int i = 1; i < argc; ++i)
+        // Parse options
+        if(argc >= 1)
         {
-            if(argcmp(argv[i], "--help", "-h"))
+            for(int o = 1; o < argc; ++o)
             {
-                handle_help(argc > i + 1 ? argv[i + 1] : NULL);
-                exit(EXIT_SUCCESS);
-            }
-            else if(argcmp(argv[i], "--version"))
-            {
-                printf("reshp (reshape) version %s (built on %s)\n", version_.c_str(), build_date_.c_str());
-                printf("Command-line tool for manipulating ESRI Shapefiles.\n");
-                exit(EXIT_SUCCESS);
-            }
-            else if(argc > i + 1)
-            {
-                std::string shapefile(argv[i]);
-                
-                if(argcmp(argv[i + 1], "--list", "-l"))
+                if(argcmp(argv[o], "--help", "-h"))
                 {
-                    handle_list(shapefile);
+                    help(argc > o + 1 ? argv[o + 1] : NULL);
+                    break;
                 }
-                else
+                else if(argcmp(argv[o], "--version"))
                 {
-                    printf("unrecognized parameter: %s\n", argv[i + 1]);
-                    printf("Try '%s --help' for more information\n", exe_name_.c_str());
+                    printf("reshp (reshape) version %s (built on %s)\n", version_.c_str(), build_date_.c_str());
+                    printf("Command-line tool for manipulating ESRI Shapefiles.\n");
+                    
+                    printf("\nWritten by the Norwegian Polar Institute (http://npolar.no/)\n");
+                    printf("This is free software, and comes with absolutely NO WARRANTY\n");
+                    break;
                 }
-                
-                exit(EXIT_SUCCESS);
+                else if(argcmp(argv[o], "--verbose", "-v"))
+                {
+                    verbose_ = true;
+                }
+                else if(argc > o + 1)
+                {
+                    std::string filename(argv[o]);
+                    
+                    // Parse parameters
+                    for(int p = o + 1; p < argc; ++p)
+                    {
+                        if(argcmp(argv[p], "--list", "-l"))
+                        {
+                            list(filename);
+                        }
+                        else if(argcmp(argv[p], "--subtract", "-s"))
+                        {
+                            if(argc > p + 1)
+                            {
+                                std::string maskfile(argv[p + 1]);
+                                subtract(filename, maskfile);
+                                ++p;
+                            }
+                            else
+                            {
+                                printf("missing input shapefile for subtract masking\n");
+                                printf("Try '%s --help subtract' for more information\n", exe_name_.c_str());
+                            }
+                        }
+                        else
+                        {
+                            printf("unrecognized parameter: %s\n", argv[p]);
+                            printf("Try '%s --help' for more information\n", exe_name_.c_str());
+                        }
+                    }
+                    
+                    break;
+                }
             }
         }
-        
-        printf("%s: missing parameter\n", exe_name_.c_str());
-        printf("Try '%s --help' for more information\n", exe_name_.c_str());
-        exit(EXIT_SUCCESS);
+        else
+        {
+            printf("%s: missing parameter\n", exe_name_.c_str());
+            printf("Try '%s --help' for more information\n", exe_name_.c_str());
+        }
     }
     
     int handler::run()

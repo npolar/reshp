@@ -23,12 +23,14 @@ namespace reshp
     private:
         std::string     build_date_;    // Compilation date (yyyy-mm-dd)
         std::string     exe_name_;      // Program executable name
+        bool            verbose_;
         std::string     version_;
         
         bool argcmp(const char* arg, const char* opt1, const char* opt2 = NULL);
         
-        void handle_help(const char* topic = NULL);
-        void handle_list(const std::string& shapefile);
+        void help(const char* topic = NULL);
+        void list(const std::string& shapefile);
+        void subtract(const std::string& basefile, const std::string& maskfile);
         
     public:
         handler(int argc, char** argv, const char* version);

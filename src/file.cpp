@@ -11,6 +11,7 @@
 \* * * * * * * * * * * * */
 
 #include "file.hpp"
+#include <new>
 
 namespace reshp
 {
@@ -315,7 +316,7 @@ namespace reshp
                         
                 if(len++ && (fseek(file_, -len, SEEK_CUR) == 0))
                 {
-                    if((buf = new char[len]()))
+                    if((buf = new (std::nothrow) char[len]()))
                     {
                         if(!fread(buf, len, 1, file_))
                         {
@@ -332,7 +333,7 @@ namespace reshp
             }
             else
             {
-                if((buf = new char[size_]()))
+                if((buf = new (std::nothrow) char[size_]()))
                 {
                     if(fscanf(file_, "%s", buf) == 1)
                     {

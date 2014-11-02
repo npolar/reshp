@@ -14,6 +14,6 @@
 
 int main(int argc, char* argv[])
 {
-    reshp::handler reshp(argc, argv, "0.3.3");
+    reshp::handler reshp(argc, argv, "0.3.4");
     return reshp.run();
 }

@@ -22,6 +22,19 @@ namespace reshp
     {
     }
     
+    aabb::aabb(const reshp::point& min, const reshp::point& max) :
+        min(min),
+        max(max)
+    {
+        this->min.x = std::min(min.x, max.x);
+        this->min.y = std::min(min.x, max.x);
+        this->min.z = std::min(min.x, max.x);
+        
+        this->max.x = std::max(min.x, max.x);
+        this->max.y = std::max(min.y, max.y);
+        this->max.z = std::max(min.z, max.z);
+    }
+    
     bool aabb::inside(const reshp::aabb& other) const
     {
         if(min.z != 0.0 || max.z != 0.0 || other.min.z != 0.0 || other.max.z != 0.0)

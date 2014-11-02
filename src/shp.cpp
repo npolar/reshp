@@ -43,6 +43,10 @@ namespace reshp
         return "unknown";
     }
     
+    shp::shape::~shape()
+    {
+    }
+    
     shp::point::point(const double x, const double y) :
         x(x),
         y(y)
