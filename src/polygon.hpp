@@ -30,6 +30,8 @@ namespace reshp
             enum { outer, inner } type;
             std::vector<reshp::point> points;
             
+            bool contains(const reshp::point&) const;
+            bool inside(const reshp::polygon::ring&) const;
             bool intersects(const reshp::polygon::ring&) const;
         };
         
@@ -39,6 +41,7 @@ namespace reshp
         reshp::aabb aabb;
         std::vector<reshp::polygon::ring> rings;
         
+        bool inside(const reshp::polygon&) const;
         bool intersects(const reshp::polygon&) const;
     };
 }

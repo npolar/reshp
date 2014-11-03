@@ -21,6 +21,32 @@ namespace reshp
     {
     }
     
+    bool polygon::ring::contains(const reshp::point& point) const
+    {
+        bool inside = false;
+        
+        for(unsigned i = 0, j = points.size() - 1; i < points.size(); j = i++)
+        {
+            if(((points[i].y > point.y) != (points[j].y > point.y))
+            && (point.x < (points[j].x - points[i].x) * (point.y - points[i].y) / (points[j].y - points[i].y) + points[i].x))
+                inside = !inside;
+        }
+        
+        return inside;
+    }
+    
+    bool polygon::ring::inside(const reshp::polygon::ring& other) const
+    {
+        if(!aabb.inside(other.aabb))
+            return false;
+        
+        for(unsigned i = 0; i < points.size(); ++i)
+            if(!other.contains(points[i]))
+                return false;
+        
+        return true;
+    }
+    
     bool polygon::ring::intersects(const reshp::polygon::ring& other) const
     {
         if(!aabb.intersects(other.aabb))
@@ -91,19 +117,28 @@ namespace reshp
         }
     }
     
+    bool polygon::inside(const reshp::polygon& other) const
+    {
+        if(!aabb.inside(other.aabb))
+            return false;
+        
+        for(unsigned tring = 0; tring < this->rings.size(); ++tring)
+            for(unsigned oring = 0; oring < other.rings.size(); ++oring)
+                if(!this->rings[tring].inside(other.rings[oring]))
+                    return false;
+        
+        return true;
+    }
+    
     bool polygon::intersects(const reshp::polygon& other) const
     {
         if(!aabb.intersects(other.aabb))
             return false;
         
         for(unsigned tring = 0; tring < this->rings.size(); ++tring)
-        {
             for(unsigned oring = 0; oring < other.rings.size(); ++oring)
-            {
                 if(this->rings[tring].intersects(other.rings[oring]))
                     return true;
-            }
-        }
         
         return false;
     }
