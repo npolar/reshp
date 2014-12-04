@@ -30,17 +30,20 @@ namespace reshp
             enum { outer, inner } type;
             std::vector<reshp::point> points;
             
+            void calculate_aabb();
             bool contains(const reshp::point&) const;
             bool inside(const reshp::polygon::ring&) const;
             bool intersects(const reshp::polygon::ring&, std::vector<reshp::point>* intersections = NULL) const;
         };
         
         polygon();
+        polygon(const reshp::polygon&);
         polygon(const reshp::shp::polygon&);
         
         reshp::aabb aabb;
         std::vector<reshp::polygon::ring> rings;
         
+        void calculate_aabb();
         bool inside(const reshp::polygon&) const;
         bool intersects(const reshp::polygon&, std::vector<reshp::point>* intersections = NULL) const;
     };

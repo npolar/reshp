@@ -21,6 +21,19 @@ namespace reshp
     {
     }
     
+    void polygon::ring::calculate_aabb()
+    {
+        aabb.initialize(); // Initialize AABB with min/max extremes
+        
+        for(unsigned i = 0; i < points.size(); ++i)
+        {
+            aabb.min.x = std::min(aabb.min.x, points[i].x);
+            aabb.min.y = std::min(aabb.min.y, points[i].y);
+            aabb.max.x = std::max(aabb.max.x, points[i].x);
+            aabb.max.y = std::max(aabb.max.y, points[i].y);
+        }
+    }
+    
     bool polygon::ring::contains(const reshp::point& point) const
     {
         bool inside = false;
@@ -85,6 +98,12 @@ namespace reshp
     {
     }
     
+    polygon::polygon(const reshp::polygon& poly) :
+        aabb(poly.aabb),
+        rings(poly.rings)
+    {
+    }
+    
     polygon::polygon(const reshp::shp::polygon& poly)
     {
         for(int32_t part = 0; part < poly.num_parts; ++part)
@@ -100,18 +119,6 @@ namespace reshp
                 && (point.x == poly.points[first].x)
                 && (point.y == poly.points[first].y))
                     break;
-                
-                // Recalculate ring bounding box
-                ring.aabb.min.x = std::min(ring.aabb.min.x, point.x);
-                ring.aabb.min.y = std::min(ring.aabb.min.y, point.y);
-                ring.aabb.max.x = std::max(ring.aabb.max.x, point.x);
-                ring.aabb.max.y = std::max(ring.aabb.max.y, point.y);
-                
-                // Recalculate polygon bounding box
-                aabb.min.x = std::min(aabb.min.x, ring.aabb.min.x);
-                aabb.min.y = std::min(aabb.min.y, ring.aabb.min.y);
-                aabb.max.x = std::max(aabb.max.x, ring.aabb.max.x);
-                aabb.max.y = std::max(aabb.max.y, ring.aabb.max.y);
                     
                 ring.points.push_back(point);
             }
@@ -126,7 +133,23 @@ namespace reshp
                 ring.type = (dir > 0 ? ring::outer : ring::inner);
             }
             
+            ring.calculate_aabb();
             rings.push_back(ring);
+        }
+        
+        calculate_aabb();
+    }
+    
+    void polygon::calculate_aabb()
+    {
+        aabb.initialize(); // Initialize AABB with min/max extremes
+        
+        for(unsigned i = 0; i < rings.size(); ++i)
+        {
+            aabb.min.x = std::min(aabb.min.x, rings[i].aabb.min.x);
+            aabb.min.y = std::min(aabb.min.y, rings[i].aabb.min.y);
+            aabb.max.x = std::max(aabb.max.x, rings[i].aabb.max.x);
+            aabb.max.y = std::max(aabb.max.y, rings[i].aabb.max.y);
         }
     }
     
