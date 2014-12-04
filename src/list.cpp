@@ -11,6 +11,8 @@
 \* * * * * * * * * * * * */
 
 #include "handler.hpp"
+#include "polygon.hpp"
+#include <vector>
 
 namespace reshp
 {
@@ -47,20 +49,21 @@ namespace reshp
             
             if(full)
             {
-                int32_t rpoints[rings];
-                
-                for(int32_t r = 0; r < rings; ++r)
-                    rpoints[r] = shp.records[i].polygon->parts[r];
-                
-                for(int32_t p = 0; p < points; ++p)
+                if(shp.records[i].polygon)
                 {
-                    for(int32_t r = 0; r < rings; ++r)
-                        if(rpoints[r] == p)
-                            printf("    ring %i:\n", r);
+                    reshp::polygon poly(*shp.records[i].polygon);
                     
-                    printf("      [%.4f, %.4f]\n", shp.records[i].polygon->points[p].x,  shp.records[i].polygon->points[p].y);
+                    for(unsigned r = 0; r < poly.rings.size(); ++r)
+                    {
+                        printf("    ring %i (%s):\n", r, (poly.rings[r].type == reshp::polygon::ring::inner ? "inner" : "outer"));
+                        
+                        for(unsigned p = 0; p < poly.rings[r].points.size(); ++p)
+                        {
+                            printf("      [%.4f, %.4f]\n", poly.rings[r].points[p].x, poly.rings[r].points[p].y);
+                        }
+                    }
                 }
             }
-        }
-    }
-}
+        } // records
+    } // handler::list()
+} // namespace reshp
