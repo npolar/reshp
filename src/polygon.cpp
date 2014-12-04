@@ -11,11 +11,21 @@
 \* * * * * * * * * * * * */
 
 #include "polygon.hpp"
-#include "segment.hpp"
 #include <algorithm>
 
 namespace reshp
 {
+    polygon::intersection::intersection(const reshp::polygon::ring* ring, const reshp::polygon::ring* intersector_ring) : 
+        ring(ring),
+        intersector(intersector_ring)
+    {
+    }
+    
+    polygon::intersection::intersector::intersector(const reshp::polygon::ring* ring) :
+        ring(ring)
+    {
+    }
+    
     polygon::ring::ring() :
         type(polygon::ring::outer)
     {
@@ -60,7 +70,7 @@ namespace reshp
         return true;
     }
     
-    bool polygon::ring::intersects(const reshp::polygon::ring& other, std::vector<reshp::point>* intersections) const
+    bool polygon::ring::intersects(const reshp::polygon::ring& other, std::vector<reshp::polygon::intersection>* intersections) const
     {
         if(!aabb.intersects(other.aabb) && !other.aabb.intersects(aabb))
             return false;
@@ -68,17 +78,17 @@ namespace reshp
         if(intersections)
             intersections->clear();
         
-        reshp::point intersection;
+        reshp::polygon::intersection intersection(this, &other);
         
         for(unsigned tpoint = 0; tpoint < this->points.size(); ++tpoint)
         {
-            reshp::segment tline(this->points[tpoint], this->points[(tpoint >= this->points.size() - 1) ? 0 : tpoint + 1]);
+            intersection.segment = reshp::segment(this->points[tpoint], this->points[(tpoint >= this->points.size() - 1) ? 0 : tpoint + 1]);
             
             for(unsigned opoint = 0; opoint < other.points.size(); ++opoint)
             {
-                reshp::segment oline(other.points[opoint], other.points[(opoint >= other.points.size() - 1) ? 0 : opoint + 1]);
+                intersection.intersector.segment = reshp::segment(other.points[opoint], other.points[(opoint >= other.points.size() - 1) ? 0 : opoint + 1]);
                 
-                if(tline.intersects(oline, &intersection))
+                if(intersection.segment.intersects(intersection.intersector.segment, &intersection.point))
                 {
                     if(!intersections)
                         return true;
@@ -166,7 +176,7 @@ namespace reshp
         return true;
     }
     
-    bool polygon::intersects(const reshp::polygon& other, std::vector<reshp::point>* intersections) const
+    bool polygon::intersects(const reshp::polygon& other, std::vector<reshp::polygon::intersection>* intersections) const
     {
         if(!aabb.intersects(other.aabb) && !other.aabb.intersects(aabb))
             return false;

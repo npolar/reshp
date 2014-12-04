@@ -22,6 +22,8 @@ namespace reshp
     {
         reshp::point start, end;
         
+        segment();
+        segment(const reshp::segment&);
         segment(const reshp::point& start, const reshp::point& end);
         
         bool intersects(const reshp::segment&, reshp::point* intersection = NULL) const;

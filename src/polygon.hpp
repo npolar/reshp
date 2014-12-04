@@ -16,12 +16,32 @@
 #include "point.hpp"
 #include "aabb.hpp"
 #include "shp.hpp"
+#include "segment.hpp"
 #include <vector>
 
 namespace reshp
 {
     struct polygon
     {
+        struct ring;
+        
+        struct intersection
+        {
+            reshp::point point;
+            const reshp::polygon::ring* ring;
+            reshp::segment segment;
+            
+            struct intersector
+            {
+                const reshp::polygon::ring* ring;
+                reshp::segment segment;
+                
+                intersector(const reshp::polygon::ring* = NULL);
+            } intersector;
+            
+            intersection(const reshp::polygon::ring* = NULL, const reshp::polygon::ring* intersector_ring = NULL);
+        };
+        
         struct ring
         {
             ring();
@@ -33,7 +53,7 @@ namespace reshp
             void calculate_aabb();
             bool contains(const reshp::point&) const;
             bool inside(const reshp::polygon::ring&) const;
-            bool intersects(const reshp::polygon::ring&, std::vector<reshp::point>* intersections = NULL) const;
+            bool intersects(const reshp::polygon::ring&, std::vector<reshp::polygon::intersection>* intersections = NULL) const;
         };
         
         polygon();
@@ -45,7 +65,7 @@ namespace reshp
         
         void calculate_aabb();
         bool inside(const reshp::polygon&) const;
-        bool intersects(const reshp::polygon&, std::vector<reshp::point>* intersections = NULL) const;
+        bool intersects(const reshp::polygon&, std::vector<reshp::polygon::intersection>* intersections = NULL) const;
     };
 }
 

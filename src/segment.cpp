@@ -14,6 +14,16 @@
 
 namespace reshp
 {
+    segment::segment()
+    {
+    }
+    
+    segment::segment(const reshp::segment& other) :
+        start(other.start),
+        end(other.end)
+    {
+    }
+    
     segment::segment(const reshp::point& start, const reshp::point& end) :
         start(start),
         end(end)
