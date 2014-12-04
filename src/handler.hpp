@@ -29,7 +29,7 @@ namespace reshp
         bool argcmp(const char* arg, const char* opt1, const char* opt2 = NULL);
         
         void help(const char* topic = NULL);
-        void list(const std::string& shapefile);
+        void list(const std::string& shapefile, const bool full = false);
         void subtract(const std::string& basefile, const std::string& maskfile);
         
     public:

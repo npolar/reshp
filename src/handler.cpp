@@ -46,6 +46,7 @@ namespace reshp
             printf("\nShapefile parameters:\n");
             printf("  -a, --add <type> <property>...    add record with specified type and properties to shapefile\n");
             printf("  -l, --list                        list various information about the shapefile\n");
+            printf("  -L, --list-full                   list full information about the shapefile, including coordinates\n");
             printf("  -o, --output <filename>           output (save) modified shapefile to specified filename\n");
             printf("      --save [filename]             save any modifications made to the shapefile\n");
             printf("  -s, --subtract <input>            subtract input shapefile shapes from shapefile\n");
@@ -104,39 +105,6 @@ namespace reshp
         }
     }
     
-    void handler::list(const std::string& shapefile)
-    {
-        reshp::shp shp;
-        if(!shp.load(shapefile))
-            return;
-        
-        printf("Filename:   %s\n", shapefile.c_str());
-        printf("Version:    %i\n", shp.header.version);
-        printf("Type:       %s\n", shp::typestr(shp.header.type));
-        printf("Bounding:   [%.4f, %.4f] [%.4f, %.4f]\n", shp.header.box[0], shp.header.box[1], shp.header.box[2], shp.header.box[3]);
-        printf("Records:    %lu\n\n", shp.records.size());
-        
-        for(unsigned i = 0; i < shp.records.size(); ++i)
-        {
-            const char* type = shp::typestr(shp.records[i].type);
-            
-            printf("  #%05i (%s)", shp.records[i].number, type);
-            
-            int32_t points = 0, rings = 0;
-            
-            if(shp.records[i].polygon)
-            {
-                rings = shp.records[i].polygon->num_parts;
-                points = shp.records[i].polygon->num_points;
-            }
-            
-            if(points)  printf(":%*s%5i point%c", int(13 - strlen(type)), " ", points, (points == 1 ? ' ' : 's'));
-            if(rings)   printf(", %5i ring%c", rings, (rings == 1 ? ' ' : 's'));
-            
-            printf("\n");
-        }
-    }
-    
     handler::handler(int argc, char** argv, const char* version) :
         build_date_("0000-00-00"),
         exe_name_(argv[0]),
@@ -169,7 +137,7 @@ namespace reshp
         else if(builddate.substr(0, 3) == "Dec") build_date_.replace(5, 2, "12");
         
         // Parse options
-        if(argc >= 1)
+        if(argc >= 2)
         {
             for(int o = 1; o < argc; ++o)
             {
@@ -200,7 +168,11 @@ namespace reshp
                     {
                         if(argcmp(argv[p], "--list", "-l"))
                         {
-                            list(filename);
+                            list(filename, false);
+                        }
+                        else if(argcmp(argv[p], "--list-full", "-L"))
+                        {
+                            list(filename, true);
                         }
                         else if(argcmp(argv[p], "--subtract", "-s"))
                         {
