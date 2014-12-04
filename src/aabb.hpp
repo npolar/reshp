@@ -24,6 +24,7 @@ namespace reshp
         aabb();
         aabb(const reshp::point& min, const reshp::point& max);
         
+        void initialize();
         bool inside(const reshp::aabb&) const;
         bool intersects(const reshp::aabb&) const;
     };

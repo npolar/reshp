@@ -17,8 +17,8 @@
 namespace reshp
 {
     aabb::aabb() :
-        min(DBL_MAX, DBL_MAX, 0.0),
-        max(DBL_MIN, DBL_MIN, 0.0)
+        min( DBL_MAX,  DBL_MAX, 0.0),
+        max(-DBL_MAX, -DBL_MAX, 0.0)
     {
     }
     
@@ -33,6 +33,12 @@ namespace reshp
         this->max.x = std::max(min.x, max.x);
         this->max.y = std::max(min.y, max.y);
         this->max.z = std::max(min.z, max.z);
+    }
+    
+    void aabb::initialize()
+    {
+        min = reshp::point( DBL_MAX,  DBL_MAX, 0.0);
+        max = reshp::point(-DBL_MAX, -DBL_MAX, 0.0);
     }
     
     bool aabb::inside(const reshp::aabb& other) const
