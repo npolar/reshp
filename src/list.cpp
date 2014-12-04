@@ -34,28 +34,25 @@ namespace reshp
             
             printf("  record %05i (%s)", shp.records[i].number, type);
             
-            int32_t points = 0, rings = 0;
-            
             if(shp.records[i].polygon)
             {
-                rings = shp.records[i].polygon->num_parts;
-                points = shp.records[i].polygon->num_points;
-            }
-            
-            if(points)  printf(":%*s%5i point%c", int(13 - strlen(type)), " ", points, (points == 1 ? ' ' : 's'));
-            if(rings)   printf(", %5i ring%c", rings, (rings == 1 ? ' ' : 's'));
-            
-            printf("\n");
-            
-            if(full)
-            {
-                if(shp.records[i].polygon)
+                reshp::polygon poly(*shp.records[i].polygon);
+                
+                unsigned rings = poly.rings.size();
+                unsigned points = 0;
+                
+                for(unsigned r = 0; r < rings; ++r)
+                    points += poly.rings[r].points.size();
+                
+                printf(":%*s%5i point%c", int(13 - strlen(type)), " ", points, (points == 1 ? ' ' : 's'));
+                printf(", %5i ring%c", rings, (rings == 1 ? ' ' : 's'));
+                printf("\n");
+                
+                if(full)
                 {
-                    reshp::polygon poly(*shp.records[i].polygon);
-                    
                     for(unsigned r = 0; r < poly.rings.size(); ++r)
                     {
-                        printf("    ring %i (%s):\n", r, (poly.rings[r].type == reshp::polygon::ring::inner ? "inner" : "outer"));
+                        printf("    ring %i (%s, %lu points):\n", r, (poly.rings[r].type == reshp::polygon::ring::inner ? "inner" : "outer"), poly.rings[r].points.size());
                         
                         for(unsigned p = 0; p < poly.rings[r].points.size(); ++p)
                         {
@@ -64,6 +61,7 @@ namespace reshp
                     }
                 }
             }
+            else printf("\n");
         } // records
     } // handler::list()
 } // namespace reshp
