@@ -32,7 +32,7 @@ namespace reshp
             
             bool contains(const reshp::point&) const;
             bool inside(const reshp::polygon::ring&) const;
-            bool intersects(const reshp::polygon::ring&) const;
+            bool intersects(const reshp::polygon::ring&, std::vector<reshp::point>* intersections = NULL) const;
         };
         
         polygon();
@@ -42,7 +42,7 @@ namespace reshp
         std::vector<reshp::polygon::ring> rings;
         
         bool inside(const reshp::polygon&) const;
-        bool intersects(const reshp::polygon&) const;
+        bool intersects(const reshp::polygon&, std::vector<reshp::point>* intersections = NULL) const;
     };
 }
 

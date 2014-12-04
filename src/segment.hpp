@@ -14,6 +14,7 @@
 #define RESHP_SEGMENT_HPP_
 
 #include "point.hpp"
+#include <cstdlib> // NULL
 
 namespace reshp
 {
@@ -23,7 +24,7 @@ namespace reshp
         
         segment(const reshp::point& start, const reshp::point& end);
         
-        bool intersects(const reshp::segment&) const;
+        bool intersects(const reshp::segment&, reshp::point* intersection = NULL) const;
     };
 }
 

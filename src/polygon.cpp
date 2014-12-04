@@ -47,10 +47,15 @@ namespace reshp
         return true;
     }
     
-    bool polygon::ring::intersects(const reshp::polygon::ring& other) const
+    bool polygon::ring::intersects(const reshp::polygon::ring& other, std::vector<reshp::point>* intersections) const
     {
-        if(!aabb.intersects(other.aabb))
+        if(!aabb.intersects(other.aabb) && !other.aabb.intersects(aabb))
             return false;
+        
+        if(intersections)
+            intersections->clear();
+        
+        reshp::point intersection;
         
         for(unsigned tpoint = 0; tpoint < this->points.size(); ++tpoint)
         {
@@ -60,10 +65,18 @@ namespace reshp
             {
                 reshp::segment oline(other.points[opoint], other.points[(opoint >= other.points.size() - 1) ? 0 : opoint + 1]);
                 
-                if(tline.intersects(oline))
-                    return true;
+                if(tline.intersects(oline, &intersection))
+                {
+                    if(!intersections)
+                        return true;
+                    
+                    intersections->push_back(intersection);
+                }
             }
         }
+        
+        if(intersections)
+            return intersections->size();
             
         return false;
     }
@@ -130,15 +143,22 @@ namespace reshp
         return true;
     }
     
-    bool polygon::intersects(const reshp::polygon& other) const
+    bool polygon::intersects(const reshp::polygon& other, std::vector<reshp::point>* intersections) const
     {
-        if(!aabb.intersects(other.aabb))
+        if(!aabb.intersects(other.aabb) && !other.aabb.intersects(aabb))
             return false;
+        
+        if(intersections)
+            intersections->clear();
         
         for(unsigned tring = 0; tring < this->rings.size(); ++tring)
             for(unsigned oring = 0; oring < other.rings.size(); ++oring)
-                if(this->rings[tring].intersects(other.rings[oring]))
-                    return true;
+                if(this->rings[tring].intersects(other.rings[oring], intersections))
+                    if(!intersections)
+                        return true;
+        
+        if(intersections)
+            return intersections->size();
         
         return false;
     }

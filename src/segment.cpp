@@ -20,39 +20,27 @@ namespace reshp
     {
     }
     
-    bool segment::intersects(const reshp::segment& other) const
+    bool segment::intersects(const reshp::segment& other, reshp::point* intersection) const
     {
-        struct triplet
+        // TODO: Division by zero handling?
+        
+        double ax = end.x - start.x;
+        double ay = end.y - start.y;
+        double bx = other.end.x - other.start.x;
+        double by = other.end.y - other.start.y;
+        double s = ((-ay * (start.x - other.start.x)) + (ax * (start.y - other.start.y))) / ((-bx * ay) + (ax * by));
+        double t = (( bx * (start.y - other.start.y)) - (by * (start.x - other.start.x))) / ((-bx * ay) + (ax * by));
+        
+        if(s >= 0.0 && s <= 1.0 && t >= 0.0 && t <= 1.0)
         {
-            static int direction(const reshp::point& a, const reshp::point& b, const reshp::point& c)
+            if(intersection)
             {
-                int dir = (((b.y - a.y) * (c.x - b.x)) -
-                           ((b.x - a.x) * (c.y - b.y)));
-                
-                // 0: Colinear, 1: Clockwise, -1: Counter-clockwise
-                return (dir > 0 ? 1 : (dir < 0 ? -1 : 0));
+                intersection->x = start.x + (t * ax);
+                intersection->y = start.y + (t * ay);
             }
-        };
-        
-        int aba = triplet::direction(start, end, other.start);
-        int abb = triplet::direction(start, end, other.end);
-        int baa = triplet::direction(other.start, other.end, start);
-        int bab = triplet::direction(other.start, other.end, end);
-        
-        if(aba != abb && baa != bab)
+            
             return true;
-        
-        if(!aba && other.start.intersects(*this))
-            return true;
-        
-        if(!abb && other.end.intersects(*this))
-            return true;
-        
-        if(!baa && start.intersects(other))
-            return true;
-        
-        if(!bab && end.intersects(other))
-            return true;
+        }
         
         return false;
     }
