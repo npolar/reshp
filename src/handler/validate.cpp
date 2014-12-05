@@ -43,9 +43,15 @@ namespace reshp
                 polys.push_back(reshp::polygon(*shp.records[i].polygon));
         }
         
+        for(unsigned i = 0; i < polys.size(); ++i)
+        {
+            if(polys[i].intersects())
+                printf("Self-intersection in polygon %u\n", i);
+            
+        }
+        
         /* TODO:
          * Check for rings without endpoint
-         * Check for self-intersection in rings
          * Check for ring-intersection in polygons
          * Check for inner-rings without outer-ring parent
          * Check for correct naming convention
