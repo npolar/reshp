@@ -10,8 +10,8 @@
 |* http://www.npolar.no/ *|
 \* * * * * * * * * * * * */
 
-#include "handler.hpp"
-#include "polygon.hpp"
+#include "../handler.hpp"
+#include "../polygon.hpp"
 #include <vector>
 #include <cstdio>
 
@@ -85,28 +85,49 @@ namespace reshp
         }
         
         if(verbose_)
-            printf("  checking polygons for intersections\n");
+            printf("  testing collision in %lu polygons\n", basepolys.size() * maskpolys.size());
         
         for(unsigned bpoly = 0; bpoly < basepolys.size(); ++bpoly)
         {
             for(unsigned mpoly = 0; mpoly < maskpolys.size(); ++mpoly)
             {
-                if(verbose_)
-                    printf("    testing base polygon %05u against mask polygon %05u\n", bpoly + 1, mpoly + 1);
-                
-                // Check if the mask polygon is entirely inside the base polygon
-                if(maskpolys[mpoly].aabb.inside(basepolys[bpoly].aabb) && !maskpolys[mpoly].intersects(basepolys[bpoly]))
+                // Mask polygon is entirely inside base polygon
+                if(maskpolys[mpoly].inside(basepolys[bpoly]))
                 {
-                    // Mask polygon is entirely inside base polygon; add mask polygon as inner ring in base polygon
+                    if(verbose_)
+                        printf("    mask polygon #%u is entirely inside base polygon #%u\n", mpoly, bpoly);
+                    
+                    for(unsigned r = 0; r < maskpolys[mpoly].rings.size(); ++ r)
+                    {
+                        if(maskpolys[mpoly].rings[r].type == reshp::polygon::ring::outer)
+                        {
+                            if(verbose_)
+                                printf("      outer ring #%u added to base polygon as inner ring\n", r);
+                            
+                            basepolys[bpoly].rings.push_back(maskpolys[mpoly].rings[r]);
+                        }
+                        else printf("      ignored inner ring #%u in mask polygon\n", r);
+                    }
+                    
+                    continue;
                 }
                 
-                // Otherwise, check if the mask polygon intersects the base polygon
-                else if(maskpolys[mpoly].aabb.intersects(basepolys[bpoly].aabb) && maskpolys[mpoly].intersects(basepolys[bpoly]))
+                std::vector<reshp::polygon::intersection> intersections;
+                
+                // Mask polygon intersects base polygon
+                if(maskpolys[mpoly].intersects(basepolys[bpoly], &intersections))
                 {
-                    // Mask polygon intersects base polygon; find intersection points and add to outer ring of base polygon.
-                    // Then remove base polygon points between intersections, and add mask polygon points.
+                    if(verbose_)
+                    {
+                        printf("    %lu intersections found between base polygon #%u and mask polygon #%u:\n", intersections.size(), bpoly, mpoly);
+                        
+                        for(unsigned i = 0; i < intersections.size(); ++i)
+                            printf("      %f, %f\n", intersections[i].point.x, intersections[i].point.y);
+                    }
+                    
+                    // TODO: Add points to base polygon outer ring
                 }
-            }
-        }
-    }
-}
+            } // maskpolys
+        } // basepolys
+    } // handler::subtract()
+} // namespace reshp

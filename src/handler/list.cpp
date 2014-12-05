@@ -10,8 +10,8 @@
 |* http://www.npolar.no/ *|
 \* * * * * * * * * * * * */
 
-#include "handler.hpp"
-#include "polygon.hpp"
+#include "../handler.hpp"
+#include "../polygon.hpp"
 #include <vector>
 
 namespace reshp
