@@ -53,7 +53,6 @@ namespace reshp
             void calculate_aabb();
             bool contains(const reshp::point&) const;
             bool inside(const reshp::polygon::ring&) const;
-            bool intersects() const; // Self-intersection
             bool intersects(const reshp::polygon::ring&, std::vector<reshp::polygon::intersection>* intersections = NULL) const;
         };
         
@@ -66,7 +65,6 @@ namespace reshp
         
         void calculate_aabb();
         bool inside(const reshp::polygon&) const;
-        bool intersects() const; // Self-intersection
         bool intersects(const reshp::polygon&, std::vector<reshp::polygon::intersection>* intersections = NULL) const;
     };
 }

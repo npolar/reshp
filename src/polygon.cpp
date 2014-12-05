@@ -70,21 +70,6 @@ namespace reshp
         return true;
     }
     
-    bool polygon::ring::intersects() const
-    {
-        std::vector<reshp::segment> segments;
-        
-        for(unsigned i = 0; i < points.size(); ++i)
-            segments.push_back(reshp::segment(points[i], points[i < (points.size() - 1) ? i + 1 : 0]));
-        
-        for(unsigned i = 0; i < segments.size(); ++i)
-            for(unsigned j = i + 1; j < segments.size(); ++j)
-                if(segments[i].intersects(segments[j]))
-                    return true;
-                
-        return false;
-    }
-    
     bool polygon::ring::intersects(const reshp::polygon::ring& other, std::vector<reshp::polygon::intersection>* intersections) const
     {
         if(!aabb.intersects(other.aabb) && !other.aabb.intersects(aabb))
@@ -189,21 +174,6 @@ namespace reshp
                     return false;
         
         return true;
-    }
-    
-    bool polygon::intersects() const
-    {
-        for(unsigned i = 0; i < rings.size(); ++i)
-        {
-            if(rings[i].intersects())
-                return true;
-            
-            for(unsigned j = i + 1; j < rings.size(); ++j)
-                if(rings[i].intersects(rings[j]))
-                    return true;
-        }
-        
-        return false;
     }
     
     bool polygon::intersects(const reshp::polygon& other, std::vector<reshp::polygon::intersection>* intersections) const
