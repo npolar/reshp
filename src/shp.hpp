@@ -256,8 +256,8 @@ namespace reshp
         ~shp();
         
         void free();
-        bool load(const std::string& filename);
-        bool save(const std::string& filename);
+        bool load(const std::string& filename, const bool errorlog = true);
+        bool save(const std::string& filename, const bool errorlog = true);
     };
 }
 

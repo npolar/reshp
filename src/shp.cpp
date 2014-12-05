@@ -292,7 +292,7 @@ namespace reshp
         memset(&header, 0, sizeof(header));
     }
     
-    bool shp::load(const std::string& filename)
+    bool shp::load(const std::string& filename, const bool errorlog)
     {
         free();
         reshp::file file;
@@ -314,28 +314,28 @@ namespace reshp
             || !file.getf(header.z_range[0], endian::little)
             || !file.getf(header.m_range[1], endian::little))
             {
-                fprintf(stderr, "could not read shapefile header from: %s\n", filename.c_str());
+                if(errorlog) fprintf(stderr, "could not read shapefile header from: %s\n", filename.c_str());
                 return false;
             }
             
             // Verify shapefile identifier
             if(header.identifier != shp::IDENTIFIER)
             {
-                fprintf(stderr, "file is not a valid shapefile: %s\n", filename.c_str());
+                if(errorlog) fprintf(stderr, "file is not a valid shapefile: %s\n", filename.c_str());
                 return false;
             }
             
             // Verify filesize with length property
             if(header.length != static_cast<int32_t>(file.size() / 2))
             {
-                fprintf(stderr, "shapesize length mismatch in: %s\n", filename.c_str());
+                if(errorlog) fprintf(stderr, "shapesize length mismatch in: %s\n", filename.c_str());
                 return false;
             }
             
             // Verify shapefile version
             if(header.version != shp::VERSION)
             {
-                fprintf(stderr, "unsupported shapefile version in: %s (%i)\n", filename.c_str(), header.version);
+                if(errorlog) fprintf(stderr, "unsupported shapefile version in: %s (%i)\n", filename.c_str(), header.version);
                 return false;
             }
             
@@ -348,7 +348,7 @@ namespace reshp
                 || !file.geti(record.length, endian::big)
                 || !file.geti(record.type, endian::little)) // Actually not a part of the record header per se
                 {
-                    fprintf(stderr, "could not read record header from shapefile: %s (index %i\n", filename.c_str(), index);
+                    if(errorlog) fprintf(stderr, "could not read record header from shapefile: %s (index %i\n", filename.c_str(), index);
                     return false;
                 }
                 
@@ -360,14 +360,14 @@ namespace reshp
                 {
                     if(!(record.point = new (std::nothrow) shp::point))
                     {
-                        fprintf(stderr, "could not allocate memory for point record in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                        if(errorlog) fprintf(stderr, "could not allocate memory for point record in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                         return false;
                     }
                     
                     if(!file.getf(record.point->x, endian::little)
                     || !file.getf(record.point->y, endian::little))
                     {
-                        fprintf(stderr, "missing data for point record in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                        if(errorlog) fprintf(stderr, "missing data for point record in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                         delete record.point;
                         return false;
                     }
@@ -378,7 +378,7 @@ namespace reshp
                 {
                     if(!(record.polyline = new (std::nothrow) shp::polyline))
                     {
-                        fprintf(stderr, "could not allocate memory for polyline record in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                        if(errorlog) fprintf(stderr, "could not allocate memory for polyline record in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                         return false;
                     }
                     
@@ -389,21 +389,21 @@ namespace reshp
                     || !file.geti(record.polyline->num_parts, endian::little)
                     || !file.geti(record.polyline->num_points, endian::little))
                     {
-                        fprintf(stderr, "missing data for polyline record in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                        if(errorlog) fprintf(stderr, "missing data for polyline record in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                         delete record.polyline;
                         return false;
                     }
                     
                     if(!(record.polyline->parts = new (std::nothrow) int32_t[record.polyline->num_parts]))
                     {
-                        fprintf(stderr, "could not allocate memory for polyline parts in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                        if(errorlog) fprintf(stderr, "could not allocate memory for polyline parts in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                         delete record.polyline; // dtor cleans up the rest
                         return false;
                     }
                     
                     if(!(record.polyline->points = new (std::nothrow) shp::point[record.polyline->num_points]))
                     {
-                        fprintf(stderr, "could not allocate memory for polyline points in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                        if(errorlog) fprintf(stderr, "could not allocate memory for polyline points in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                         delete record.polyline; // dtor cleans up the rest
                         return false;
                     }
@@ -413,7 +413,7 @@ namespace reshp
                         int32_t& part = record.polyline->parts[i];
                         if(!file.geti(part, endian::little))
                         {
-                            fprintf(stderr, "missing polyline parts in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                            if(errorlog) fprintf(stderr, "missing polyline parts in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                             delete record.polyline; // dtor cleans up the rest
                             return false;
                         }
@@ -425,7 +425,7 @@ namespace reshp
                         if(!file.getf(point.x, endian::little)
                         || !file.getf(point.y, endian::little))
                         {
-                            fprintf(stderr, "missing polyline points in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                            if(errorlog) fprintf(stderr, "missing polyline points in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                             delete record.polyline; // dtor cleans up the rest
                             return false;
                         }
@@ -437,7 +437,7 @@ namespace reshp
                 {
                     if(!(record.polygon = new (std::nothrow) shp::polygon))
                     {
-                        fprintf(stderr, "could not allocate memory for polygon record in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                        if(errorlog) fprintf(stderr, "could not allocate memory for polygon record in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                         return false;
                     }
                     
@@ -448,21 +448,21 @@ namespace reshp
                     || !file.geti(record.polygon->num_parts, endian::little)
                     || !file.geti(record.polygon->num_points, endian::little))
                     {
-                        fprintf(stderr, "missing data for polygon record in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                        if(errorlog) fprintf(stderr, "missing data for polygon record in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                         delete record.polygon;
                         return false;
                     }
                     
                     if(!(record.polygon->parts = new (std::nothrow) int32_t[record.polygon->num_parts]))
                     {
-                        fprintf(stderr, "could not allocate memory for polygon parts in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                        if(errorlog) fprintf(stderr, "could not allocate memory for polygon parts in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                         delete record.polygon; // dtor cleans up the rest
                         return false;
                     }
                     
                     if(!(record.polygon->points = new (std::nothrow) shp::point[record.polygon->num_points]))
                     {
-                        fprintf(stderr, "could not allocate memory for polygon points in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                        if(errorlog) fprintf(stderr, "could not allocate memory for polygon points in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                         delete record.polygon; // dtor cleans up the rest
                         return false;
                     }
@@ -472,7 +472,7 @@ namespace reshp
                         int32_t& part = record.polygon->parts[i];
                         if(!file.geti(part, endian::little))
                         {
-                            fprintf(stderr, "missing polygon parts in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                            if(errorlog) fprintf(stderr, "missing polygon parts in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                             delete record.polygon; // dtor cleans up the rest
                             return false;
                         }
@@ -484,7 +484,7 @@ namespace reshp
                         if(!file.getf(point.x, endian::little)
                         || !file.getf(point.y, endian::little))
                         {
-                            fprintf(stderr, "missing polygon points in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                            if(errorlog) fprintf(stderr, "missing polygon points in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                             delete record.polygon; // dtor cleans up the rest
                             return false;
                         }
@@ -496,7 +496,7 @@ namespace reshp
                 {
                     if(!(record.multipoint = new (std::nothrow) shp::multipoint))
                     {
-                        fprintf(stderr, "could not allocate memory for multipoint record in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                        if(errorlog) fprintf(stderr, "could not allocate memory for multipoint record in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                         return false;
                     }
                     
@@ -506,14 +506,14 @@ namespace reshp
                     || !file.getf(record.multipoint->box[3], endian::little) // Ymax
                     || !file.geti(record.multipoint->num_points, endian::little))
                     {
-                        fprintf(stderr, "missing data for multipoint record in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                        if(errorlog) fprintf(stderr, "missing data for multipoint record in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                         delete record.multipoint;
                         return false;
                     }
                     
                     if(!(record.multipoint->points = new (std::nothrow) shp::point[record.multipoint->num_points]))
                     {
-                        fprintf(stderr, "could not allocate memory for multipoint points in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                        if(errorlog) fprintf(stderr, "could not allocate memory for multipoint points in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                         delete record.multipoint; // dtor cleans up the rest
                         return false;
                     }
@@ -524,7 +524,7 @@ namespace reshp
                         if(!file.getf(point.x, endian::little)
                         || !file.getf(point.y, endian::little))
                         {
-                            fprintf(stderr, "missing multipoint points in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                            if(errorlog) fprintf(stderr, "missing multipoint points in shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                             delete record.multipoint; // dtor cleans up the rest
                             return false;
                         }
@@ -534,7 +534,7 @@ namespace reshp
                 }
                 else
                 {
-                    fprintf(stderr, "unsupported record type for reading: %s (record #%i in %s)\n", shp::typestr(record.type), record.number, filename.c_str());
+                    if(errorlog) fprintf(stderr, "unsupported record type for reading: %s (record #%i in %s)\n", shp::typestr(record.type), record.number, filename.c_str());
                     file.seek((record.length * 2) - 4, true);
                 }
                 
@@ -545,11 +545,11 @@ namespace reshp
             return true;
         }
         
-        fprintf(stderr, "could not open file for reading: %s\n", filename.c_str());
+        if(errorlog) fprintf(stderr, "could not open file for reading: %s\n", filename.c_str());
         return false;
     }
     
-    bool shp::save(const std::string& filename)
+    bool shp::save(const std::string& filename, const bool errorlog)
     {
         reshp::file file;
         
@@ -570,7 +570,7 @@ namespace reshp
             || !file.putf(header.z_range[0], endian::little)
             || !file.putf(header.m_range[1], endian::little))
             {
-                fprintf(stderr, "could not write shapefile header to: %s\n", filename.c_str());
+                if(errorlog) fprintf(stderr, "could not write shapefile header to: %s\n", filename.c_str());
                 return false;
             }
             
@@ -592,7 +592,7 @@ namespace reshp
                 || !file.puti(record.length, endian::big)
                 || !file.puti(record.type, endian::little))
                 {
-                    fprintf(stderr, "could not write shapefile record header to: %s (index %u)\n", filename.c_str(), i);
+                    if(errorlog) fprintf(stderr, "could not write shapefile record header to: %s (index %u)\n", filename.c_str(), i);
                     return false;
                 }
                 
@@ -604,14 +604,14 @@ namespace reshp
                 {
                     if(!record.point)
                     {
-                        fprintf(stderr, "missing record point data for record: #%i\n", record.number);
+                        if(errorlog) fprintf(stderr, "missing record point data for record: #%i\n", record.number);
                         return false;
                     }
                     
                     if(!file.putf(record.point->x, endian::little)
                     || !file.putf(record.point->y, endian::little))
                     {
-                        fprintf(stderr, "could not write point record to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                        if(errorlog) fprintf(stderr, "could not write point record to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                         return false;
                     }
                     else recordlen += 8;
@@ -620,7 +620,7 @@ namespace reshp
                 {
                     if(!record.polyline)
                     {
-                        fprintf(stderr, "missing record polyline data for record: #%i\n", record.number);
+                        if(errorlog) fprintf(stderr, "missing record polyline data for record: #%i\n", record.number);
                         return false;
                     }
                     
@@ -631,14 +631,14 @@ namespace reshp
                     || !file.puti(record.polyline->num_parts, endian::little)
                     || !file.puti(record.polyline->num_points, endian::little))
                     {
-                        fprintf(stderr, "could not write polyline record to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                        if(errorlog) fprintf(stderr, "could not write polyline record to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                         return false;
                     }
                     else recordlen += 20;
                     
                     if(!record.polyline->parts)
                     {
-                        fprintf(stderr, "missing parts in polyline record: #%i\n", record.number);
+                        if(errorlog) fprintf(stderr, "missing parts in polyline record: #%i\n", record.number);
                         return false;
                     }
                     
@@ -647,7 +647,7 @@ namespace reshp
                         int32_t& part = record.polyline->parts[i];
                         if(!file.puti(part, endian::little))
                         {
-                            fprintf(stderr, "could not write polyline parts to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                            if(errorlog) fprintf(stderr, "could not write polyline parts to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                             return false;
                         }
                         else recordlen += 2;
@@ -655,7 +655,7 @@ namespace reshp
                     
                     if(!record.polyline->points)
                     {
-                        fprintf(stderr, "missing points in polyline record: #%i\n", record.number);
+                        if(errorlog) fprintf(stderr, "missing points in polyline record: #%i\n", record.number);
                         return false;
                     }
                     
@@ -665,7 +665,7 @@ namespace reshp
                         if(!file.putf(point.x, endian::little)
                         || !file.putf(point.y, endian::little))
                         {
-                            fprintf(stderr, "could not write polyline points to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                            if(errorlog) fprintf(stderr, "could not write polyline points to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                             return false;
                         }
                         else recordlen += 8;
@@ -675,7 +675,7 @@ namespace reshp
                 {
                     if(!record.polygon)
                     {
-                        fprintf(stderr, "missing record polygon data for record: #%i\n", record.number);
+                        if(errorlog) fprintf(stderr, "missing record polygon data for record: #%i\n", record.number);
                         return false;
                     }
                     
@@ -686,14 +686,14 @@ namespace reshp
                     || !file.puti(record.polygon->num_parts, endian::little)
                     || !file.puti(record.polygon->num_points, endian::little))
                     {
-                        fprintf(stderr, "could not write polygon record to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                        if(errorlog) fprintf(stderr, "could not write polygon record to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                         return false;
                     }
                     else recordlen += 20;
                     
                     if(!record.polygon->parts)
                     {
-                        fprintf(stderr, "missing parts in polygon record: #%i\n", record.number);
+                        if(errorlog) fprintf(stderr, "missing parts in polygon record: #%i\n", record.number);
                         return false;
                     }
                     
@@ -702,7 +702,7 @@ namespace reshp
                         int32_t& part = record.polygon->parts[i];
                         if(!file.puti(part, endian::little))
                         {
-                            fprintf(stderr, "could not write polygon parts to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                            if(errorlog) fprintf(stderr, "could not write polygon parts to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                             return false;
                         }
                         else recordlen += 2;
@@ -710,7 +710,7 @@ namespace reshp
                     
                     if(!record.polygon->points)
                     {
-                        fprintf(stderr, "missing points in polygon record: #%i\n", record.number);
+                        if(errorlog) fprintf(stderr, "missing points in polygon record: #%i\n", record.number);
                         return false;
                     }
                     
@@ -720,7 +720,7 @@ namespace reshp
                         if(!file.putf(point.x, endian::little)
                         || !file.putf(point.y, endian::little))
                         {
-                            fprintf(stderr, "could not write polygon points to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                            if(errorlog) fprintf(stderr, "could not write polygon points to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                             return false;
                         }
                         else recordlen += 8;
@@ -730,7 +730,7 @@ namespace reshp
                 {
                     if(!record.multipoint)
                     {
-                        fprintf(stderr, "missing record multipoint data for record: #%i\n", record.number);
+                        if(errorlog) fprintf(stderr, "missing record multipoint data for record: #%i\n", record.number);
                         return false;
                     }
                     
@@ -740,14 +740,14 @@ namespace reshp
                     || !file.putf(record.multipoint->box[3], endian::little) // Ymax
                     || !file.puti(record.multipoint->num_points, endian::little))
                     {
-                        fprintf(stderr, "could not write multipoint record to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                        if(errorlog) fprintf(stderr, "could not write multipoint record to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                         return false;
                     }
                     else recordlen += 20;
                     
                     if(!record.multipoint->points)
                     {
-                        fprintf(stderr, "missing points in multipoint record: #%i\n", record.number);
+                        if(errorlog) fprintf(stderr, "missing points in multipoint record: #%i\n", record.number);
                         return false;
                     }
                     
@@ -757,7 +757,7 @@ namespace reshp
                         if(!file.putf(point.x, endian::little)
                         || !file.putf(point.y, endian::little))
                         {
-                            fprintf(stderr, "could not write multipoint points to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
+                            if(errorlog) fprintf(stderr, "could not write multipoint points to shapefile: %s (record #%i)\n", filename.c_str(), record.number);
                             return false;
                         }
                         else recordlen += 8;
@@ -765,7 +765,7 @@ namespace reshp
                 }
                 else
                 {
-                    fprintf(stderr, "unsupported record type for writing: %s (record #%i)\n", shp::typestr(record.type), record.number);
+                    if(errorlog) fprintf(stderr, "unsupported record type for writing: %s (record #%i)\n", shp::typestr(record.type), record.number);
                     
                     char data[record.length * 2];
                     memset(data, 0, sizeof(data));
@@ -776,7 +776,7 @@ namespace reshp
                 
                 if(record.length != recordlen)
                 {
-                    fprintf(stderr, "record header length mismatch for record: #%i (%i, expected %i)\n", record.number, record.length, recordlen);
+                    if(errorlog) fprintf(stderr, "record header length mismatch for record: #%i (%i, expected %i)\n", record.number, record.length, recordlen);
                     return false;
                 }
                 else filelen += (record.length * 2);
@@ -791,7 +791,7 @@ namespace reshp
             return true;
         }
         
-        fprintf(stderr, "could not open file for writing: %s\n", filename.c_str());
+        if(errorlog) fprintf(stderr, "could not open file for writing: %s\n", filename.c_str());
         return false;
     }
 }
