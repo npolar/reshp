@@ -50,6 +50,7 @@ namespace reshp
             printf("  -o, --output <filename>           output (save) modified shapefile to specified filename\n");
             printf("      --save [filename]             save any modifications made to the shapefile\n");
             printf("  -s, --subtract <input>            subtract input shapefile shapes from shapefile\n");
+            printf("  -V, --validate                    validate the shapefile with a grade ranging from A to F\n");
         }
         else if(argcmp(topic, "add", "a"))
         {
@@ -97,6 +98,17 @@ namespace reshp
         {
             printf("%s --verbose [shapefile <parameter>...]\n", exe_name_.c_str());
             printf("Enable verbose output of certain manipulation operations.\n");
+        }
+        else if(argcmp(topic, "validate", "V"))
+        {
+            printf("%s --validate\n", exe_name_.c_str());
+            printf("Validate the shapefile, and output one of the following grades:\n");
+            printf("  A: Valid ESRI Shapefile, which completely complies with the specifications\n");
+            printf("  B: Valid ESRI Shapefile, with valid data and clean shapes according to the specifications\n");
+            printf("  C: Valid ESRI Shapefile, with valid data and no self-intersecting shapes\n");
+            printf("  D: Valid ESRI Shapefile, with no broken records or missing data\n");
+            printf("  E: Valid ESRI Shapefile, with broken records or missing data\n");
+            printf("  F: Not a valid ESRI Shapefile\n");
         }
         else
         {
@@ -187,6 +199,10 @@ namespace reshp
                                 printf("missing input shapefile for subtract masking\n");
                                 printf("Try '%s --help subtract' for more information\n", exe_name_.c_str());
                             }
+                        }
+                        else if(argcmp(argv[p], "--validate", "-V"))
+                        {
+                            validate(filename);
                         }
                         else
                         {
