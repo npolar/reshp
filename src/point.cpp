@@ -29,4 +29,18 @@ namespace reshp
                 (segment.end.y <= std::max(segment.start.y, y) && segment.end.y >= std::min(segment.start.y, y)) &&
                 (segment.end.z <= std::max(segment.start.z, z) && segment.end.z >= std::min(segment.start.z, z)));
     }
+    
+    bool point::operator==(const reshp::point& other) const
+    {
+        double epsilon = 10e-5, epsilon_neg = (epsilon / -1);
+        
+        return (((x - other.x) < epsilon) && ((x - other.x) > epsilon_neg)) &&
+               (((y - other.y) < epsilon) && ((y - other.y) > epsilon_neg)) &&
+               (((z - other.z) < epsilon) && ((z - other.z) > epsilon_neg));
+    }
+    
+    bool point::operator!=(const reshp::point& other) const
+    {
+        return !(*this == other);
+    }
 }

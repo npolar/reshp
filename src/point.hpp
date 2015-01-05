@@ -13,6 +13,8 @@
 #ifndef RESHP_POINT_HPP_
 #define RESHP_POINT_HPP_
 
+#include <cfloat>
+
 namespace reshp
 {
     struct segment;
@@ -24,6 +26,9 @@ namespace reshp
         point(const double x = 0.0, const double y = 0.0, const double z = 0.0);
         
         bool intersects(const reshp::segment&) const;
+        
+        bool operator==(const reshp::point&) const;
+        bool operator!=(const reshp::point&) const;
     };
 }
 
