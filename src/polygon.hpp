@@ -29,12 +29,12 @@ namespace reshp
         {
             reshp::point point;
             const reshp::polygon::ring* ring;
-            reshp::segment segment;
+            const reshp::segment* segment;
             
             struct intersector
             {
                 const reshp::polygon::ring* ring;
-                reshp::segment segment;
+                const reshp::segment* segment;
                 
                 intersector(const reshp::polygon::ring* = NULL);
             } intersector;
@@ -48,7 +48,7 @@ namespace reshp
             
             reshp::aabb aabb;
             enum { outer, inner } type;
-            std::vector<reshp::point> points;
+            std::vector<reshp::segment> segments;
             
             void calculate_aabb();
             bool contains(const reshp::point&) const;

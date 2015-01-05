@@ -17,12 +17,14 @@ namespace reshp
 {
     polygon::intersection::intersection(const reshp::polygon::ring* ring, const reshp::polygon::ring* intersector_ring) : 
         ring(ring),
+        segment(NULL),
         intersector(intersector_ring)
     {
     }
     
     polygon::intersection::intersector::intersector(const reshp::polygon::ring* ring) :
-        ring(ring)
+        ring(ring),
+        segment(NULL)
     {
     }
     
@@ -35,12 +37,12 @@ namespace reshp
     {
         aabb.initialize(); // Initialize AABB with min/max extremes
         
-        for(unsigned i = 0; i < points.size(); ++i)
+        for(unsigned i = 0; i < segments.size(); ++i)
         {
-            aabb.min.x = std::min(aabb.min.x, points[i].x);
-            aabb.min.y = std::min(aabb.min.y, points[i].y);
-            aabb.max.x = std::max(aabb.max.x, points[i].x);
-            aabb.max.y = std::max(aabb.max.y, points[i].y);
+            aabb.min.x = std::min(aabb.min.x, segments[i].start.x);
+            aabb.min.y = std::min(aabb.min.y, segments[i].start.y);
+            aabb.max.x = std::max(aabb.max.x, segments[i].start.x);
+            aabb.max.y = std::max(aabb.max.y, segments[i].start.y);
         }
     }
     
@@ -48,10 +50,10 @@ namespace reshp
     {
         bool inside = false;
         
-        for(unsigned i = 0, j = points.size() - 1; i < points.size(); j = i++)
+        for(unsigned i = 0, j = segments.size() - 1; i < segments.size(); j = i++)
         {
-            if(((points[i].y > point.y) != (points[j].y > point.y))
-            && (point.x < (points[j].x - points[i].x) * (point.y - points[i].y) / (points[j].y - points[i].y) + points[i].x))
+            if(((segments[i].start.y > point.y) != (segments[j].start.y > point.y))
+            && (point.x < (segments[j].start.x - segments[i].start.x) * (point.y - segments[i].start.y) / (segments[j].start.y - segments[i].start.y) + segments[i].start.x))
                 inside = !inside;
         }
         
@@ -63,27 +65,23 @@ namespace reshp
         if(!aabb.inside(other.aabb))
             return false;
         
-        for(unsigned i = 0; i < points.size(); ++i)
-            if(!other.contains(points[i]))
+        for(unsigned i = 0; i < segments.size(); ++i)
+            if(!other.contains(segments[i].start))
                 return false;
-        
+            
         return true;
     }
     
     bool polygon::ring::intersects() const
     {
-        std::vector<reshp::segment> segments;
-        
-        // TODO: More efficient self-intersection check
-        
-        for(unsigned i = 0; i < points.size(); ++i)
-            segments.push_back(reshp::segment(points[i], points[i < (points.size() - 1) ? i + 1 : 0]));
+        // TODO: Efficiency test
         
         for(unsigned i = 0, s = segments.size(); i < s - 2; ++i)
             for(unsigned j = i + 1; j < segments.size(); ++j)
                 if(j - i > 1 && j < (s - 1) + i)
                     if(segments[i].intersects(segments[j]))
                         return true;
+                    
         return false;
     }
     
@@ -97,15 +95,15 @@ namespace reshp
         
         reshp::polygon::intersection intersection(this, &other);
         
-        for(unsigned tpoint = 0; tpoint < this->points.size(); ++tpoint)
+        for(unsigned tseg = 0; tseg < this->segments.size(); ++tseg)
         {
-            intersection.segment = reshp::segment(this->points[tpoint], this->points[(tpoint >= this->points.size() - 1) ? 0 : tpoint + 1]);
+            intersection.segment = &this->segments[tseg];
             
-            for(unsigned opoint = 0; opoint < other.points.size(); ++opoint)
+            for(unsigned oseg = 0; oseg < other.segments.size(); ++oseg)
             {
-                intersection.intersector.segment = reshp::segment(other.points[opoint], other.points[(opoint >= other.points.size() - 1) ? 0 : opoint + 1]);
+                intersection.intersector.segment = &other.segments[oseg];
                 
-                if(intersection.segment.intersects(intersection.intersector.segment, &intersection.point))
+                if(intersection.segment->intersects(*intersection.intersector.segment, &intersection.point))
                 {
                     if(!intersections)
                         return true;
@@ -115,8 +113,8 @@ namespace reshp
             }
         }
         
-        if(intersections)
-            return intersections->size();
+        if(intersections && intersections->size())
+            return true;
             
         return false;
     }
@@ -136,25 +134,24 @@ namespace reshp
         for(int32_t part = 0; part < poly.num_parts; ++part)
         {
             reshp::polygon::ring ring;
-            int32_t first = poly.parts[part];
+            int32_t first_index = poly.parts[part];
+            reshp::point first(poly.points[first_index].x, poly.points[first_index].y);
             
-            for(int32_t p = first; p < poly.num_points; ++p)
+            for(int32_t p = first_index + 1; p < poly.num_points; ++p)
             {
-                reshp::point point(poly.points[p].x, poly.points[p].y);
+                reshp::segment segment(reshp::point(poly.points[p - 1].x, poly.points[p - 1].y),
+                                       reshp::point(poly.points[p].x, poly.points[p].y));
                 
-                if((p != first)
-                && (point.x == poly.points[first].x)
-                && (point.y == poly.points[first].y))
+                ring.segments.push_back(segment);
+                
+                if(segment.end == first)
                     break;
-                    
-                ring.points.push_back(point);
             }
             
-            if(ring.points.size() >= 3)
+            if(ring.segments.size() >= 3)
             {
-                // 0: Colinear, >0: Clockwise, <0: Counter-clockwise
-                int dir = (((ring.points[1].y - ring.points[0].y) * (ring.points[2].x - ring.points[1].x)) - 
-                           ((ring.points[1].x - ring.points[0].x) * (ring.points[2].y - ring.points[1].y)));
+                int dir = (((ring.segments[0].end.y - ring.segments[0].start.y) * (ring.segments[1].end.x - ring.segments[1].start.x)) -
+                           ((ring.segments[0].end.x - ring.segments[0].start.x) * (ring.segments[1].end.y - ring.segments[1].start.y)));
                 
                 // Clockwise: Outer, Counter-clockwise: Inner
                 ring.type = (dir > 0 ? ring::outer : ring::inner);
