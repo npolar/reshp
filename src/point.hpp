@@ -13,8 +13,6 @@
 #ifndef RESHP_POINT_HPP_
 #define RESHP_POINT_HPP_
 
-#include <cfloat>
-
 namespace reshp
 {
     struct segment;
