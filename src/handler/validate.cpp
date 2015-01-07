@@ -29,35 +29,72 @@ namespace reshp
         */
         
         reshp::shp shp;
-        if(!shp.load(shapefile, false))
+        if(!shp.load(shapefile, verbose_))
         {
             printf("%c\n", (shp.records.size() ? 'E' : 'F'));
             return;
         }
         
+        char grade = 'A';
         std::vector<reshp::polygon> polys;
         
         for(unsigned i = 0; i < shp.records.size(); ++i)
         {
             if(shp.records[i].polygon)
-                polys.push_back(reshp::polygon(*shp.records[i].polygon));
+            {
+                reshp::polygon poly(*shp.records[i].polygon);
+                polys.push_back(poly);
+                
+                // Check for correct amount of rings
+                if(poly.rings.size() != static_cast<unsigned>(shp.records[i].polygon->num_parts))
+                {
+                    if(verbose_)
+                        printf("missing ring endpoints in polygon %lu\n", polys.size() - 1);
+                    
+                    if(grade < 'D')
+                        grade = 'D';
+                }
+            }
         }
         
-        for(unsigned i = 0; i < polys.size(); ++i)
+        for(unsigned p = 0; p < polys.size(); ++p)
         {
-            if(polys[i].intersects())
-                printf("Self-intersection in polygon %u\n", i);
+            // Check for self-intersections
+            if(polys[p].intersects())
+            {
+                if(verbose_)
+                    printf("self-intersections in polygon %u\n", p);
+                
+                if(grade < 'D')
+                    grade = 'D';
+            }
             
+            unsigned outer_rings = 0;
+            
+            for(unsigned r = 0; r < polys[p].rings.size(); ++r)
+                if(polys[p].rings[r].type == reshp::polygon::ring::outer)
+                    outer_rings++;
+            
+            // Check for missing outer rings
+            if(polys[p].rings.size() && !outer_rings)
+            {
+                if(verbose_)
+                    printf("missing outer rings in polygon %u\n", p);
+                
+                if(grade < 'C')
+                    grade = 'C';
+            }
         }
         
         /* TODO:
-         * Check for rings without endpoint
-         * Check for ring-intersection in polygons
          * Check for inner-rings without outer-ring parent
          * Check for correct naming convention
          * Check for required files
          */
         
-        printf("D\n");
+        if(grade < 'B')
+            grade = 'B';
+        
+        printf("%c\n", grade);
     } // handler::validate()
 } // namespace reshp
