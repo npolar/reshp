@@ -348,7 +348,7 @@ namespace reshp
                 || !file.geti(record.length, endian::big)
                 || !file.geti(record.type, endian::little)) // Actually not a part of the record header per se
                 {
-                    if(errorlog) fprintf(stderr, "could not read record header from shapefile: %s (index %i\n", filename.c_str(), index);
+                    if(errorlog) fprintf(stderr, "could not read record header from shapefile: %s (index %i)\n", filename.c_str(), index);
                     return false;
                 }
                 
