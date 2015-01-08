@@ -16,14 +16,14 @@
 
 namespace reshp
 {
-    polygon::intersection::intersection(const reshp::polygon::ring* ring, const reshp::polygon::ring* intersector_ring) : 
+    polygon::intersection::intersection(reshp::polygon::ring* ring, reshp::polygon::ring* intersector_ring) : 
         ring(ring),
         segment(NULL),
         intersector(intersector_ring)
     {
     }
     
-    polygon::intersection::intersector::intersector(const reshp::polygon::ring* ring) :
+    polygon::intersection::intersector::intersector(reshp::polygon::ring* ring) :
         ring(ring),
         segment(NULL)
     {
@@ -94,15 +94,17 @@ namespace reshp
         if(intersections)
             intersections->clear();
         
-        reshp::polygon::intersection intersection(this, &other);
+        reshp::polygon::ring* mutable_this = const_cast<reshp::polygon::ring*>(this);
+        reshp::polygon::ring* mutable_other = const_cast<reshp::polygon::ring*>(&other);
+        reshp::polygon::intersection intersection(mutable_this, mutable_other);
         
         for(unsigned tseg = 0; tseg < this->segments.size(); ++tseg)
         {
-            intersection.segment = &this->segments[tseg];
+            intersection.segment = &mutable_this->segments[tseg];
             
             for(unsigned oseg = 0; oseg < other.segments.size(); ++oseg)
             {
-                intersection.intersector.segment = &other.segments[oseg];
+                intersection.intersector.segment = &mutable_other->segments[oseg];
                 
                 if(intersection.segment->intersects(*intersection.intersector.segment, &intersection.point))
                 {
@@ -176,6 +178,27 @@ namespace reshp
             aabb.max.x = std::max(aabb.max.x, rings[i].aabb.max.x);
             aabb.max.y = std::max(aabb.max.y, rings[i].aabb.max.y);
         }
+    }
+    
+    bool polygon::contains(const reshp::point& point) const
+    {
+        bool inside = false;
+        
+        // Return false if point is inside inner ring (hole)
+        for(unsigned r = 0; r < rings.size(); ++r)
+        {
+            if(rings[r].contains(point))
+            {
+                if(rings[r].type == reshp::polygon::ring::inner)
+                {
+                    return false;
+                }
+                else if(!inside)
+                    inside = true;
+            }
+        }
+        
+        return inside;
     }
     
     bool polygon::inside(const reshp::polygon& other) const

@@ -28,18 +28,18 @@ namespace reshp
         struct intersection
         {
             reshp::point point;
-            const reshp::polygon::ring* ring;
-            const reshp::segment* segment;
+            reshp::polygon::ring* ring;
+            reshp::segment* segment;
             
             struct intersector
             {
-                const reshp::polygon::ring* ring;
-                const reshp::segment* segment;
+                reshp::polygon::ring* ring;
+                reshp::segment* segment;
                 
-                intersector(const reshp::polygon::ring* = NULL);
+                intersector(reshp::polygon::ring* = NULL);
             } intersector;
             
-            intersection(const reshp::polygon::ring* = NULL, const reshp::polygon::ring* intersector_ring = NULL);
+            intersection(reshp::polygon::ring* = NULL, reshp::polygon::ring* intersector_ring = NULL);
         };
         
         struct ring
@@ -65,6 +65,7 @@ namespace reshp
         std::vector<reshp::polygon::ring> rings;
         
         void calculate_aabb();
+        bool contains(const reshp::point&) const;
         bool inside(const reshp::polygon&) const;
         bool intersects() const; // Self-intersection
         bool intersects(const reshp::polygon&, std::vector<reshp::polygon::intersection>* intersections = NULL) const;
