@@ -68,6 +68,8 @@ namespace reshp
         bool inside(const reshp::polygon&) const;
         bool intersects() const; // Self-intersection
         bool intersects(const reshp::polygon&, std::vector<reshp::polygon::intersection>* intersections = NULL) const;
+        
+        void operator>> (reshp::shp::polygon&) const;
     };
 }
 

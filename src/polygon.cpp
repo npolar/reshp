@@ -12,6 +12,7 @@
 
 #include "polygon.hpp"
 #include <algorithm>
+#include <new>
 
 namespace reshp
 {
@@ -223,5 +224,42 @@ namespace reshp
             return intersections->size();
         
         return false;
+    }
+    
+    void polygon::operator>> (reshp::shp::polygon& poly) const
+    {
+        poly.box[0] = aabb.min.x;
+        poly.box[1] = aabb.min.y;
+        poly.box[2] = aabb.max.x;
+        poly.box[3] = aabb.max.y;
+        
+        unsigned points = 0, parts = rings.size();
+        
+        for(unsigned p = 0; p < parts; ++p)
+            points += rings[p].segments.size() + 1;
+        
+        if(poly.parts)
+            delete poly.parts;
+        
+        if(poly.points)
+            delete poly.points;
+        
+        if((poly.parts = new (std::nothrow) int32_t[parts]))
+        {
+            if((poly.points = new (std::nothrow) reshp::shp::point[points]))
+            {
+                for(unsigned r = 0; r < parts; ++r)
+                {
+                    poly.parts[poly.num_parts++] = poly.num_points;
+                    
+                    for(unsigned s = 0; s < rings[r].segments.size(); ++s)
+                    {
+                        poly.points[++poly.num_points] = reshp::shp::point(rings[r].segments[s].start.x, rings[r].segments[s].start.y);
+                    }
+                    
+                    poly.points[++poly.num_points] = reshp::shp::point(rings[r].segments[0].start.x, rings[r].segments[0].start.y);
+                }
+            }
+        }
     }
 }
