@@ -202,14 +202,19 @@ namespace reshp
     {
         close();
         
+        bool file_exists = exists(filename);
         char fmodes[4] = { 0, 0, 0, 0 };
         uint8_t m = 0;
         
-        if(modes & file::mode::read)
-            fmodes[m++] = 'r';
-        
         if(modes & file::mode::write)
-            fmodes[m++] = 'a';
+        {
+            fmodes[m++] = (file_exists ? 'r' : 'w');
+            
+            if(!file_exists || (modes & file::mode::read))
+                fmodes[m++] = '+';
+        }
+        else if(modes & file::mode::read)
+            fmodes[m++] = 'r';
         
         if(modes & file::mode::binary)
             fmodes[m++] = 'b';
