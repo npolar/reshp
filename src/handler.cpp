@@ -44,14 +44,14 @@ namespace reshp
             printf("  -v, --verbose                     verbosely output performed manipulation operations\n");
             
             printf("\nShapefile parameters:\n");
-            printf("  -a, --add <type> <property>...    add record with specified type and properties to shapefile\n");
+            //printf("  -a, --add <type> <property>...    add record with specified type and properties to shapefile\n");
             printf("  -l, --list                        list various information about the shapefile\n");
             printf("  -L, --list-full                   list full information about the shapefile, including coordinates\n");
             printf("  -o, --output <filename>           output (save) modified shapefile to specified filename\n");
-            printf("      --save [filename]             save any modifications made to the shapefile\n");
             printf("  -s, --subtract <input>            subtract input shapefile shapes from shapefile\n");
             printf("  -V, --validate                    validate the shapefile with a grade ranging from A to F\n");
         }
+        /*
         else if(argcmp(topic, "add", "a"))
         {
             printf("%s <shapefile> --add <type> [property]...\n", exe_name_.c_str());
@@ -73,6 +73,7 @@ namespace reshp
             printf("  <y>       y coordinate as floating number\n");
             printf("  <z>       z coordinate as floating number\n");
         }
+        */
         else if(argcmp(topic, "list", "l"))
         {
             printf("%s <shapefile> --list\n", exe_name_.c_str());
@@ -82,12 +83,6 @@ namespace reshp
         {
             printf("%s <shapefile> --output [filename]\n", exe_name_.c_str());
             printf("Output changes made to the shapefile to specified filename.\n");
-        }
-        else if(argcmp(topic, "save"))
-        {
-            printf("%s <shapefile> --save [output]\n", exe_name_.c_str());
-            printf("Save any changes made to the shapefile (thus overwriting the original contents).\n");
-            printf("Overwriting the original shapefile can be prevented by specifying an output filename.\n");
         }
         else if(argcmp(topic, "subtract", "s"))
         {
@@ -109,6 +104,8 @@ namespace reshp
             printf("  D: Valid ESRI Shapefile, with no broken records or missing data\n");
             printf("  E: Valid ESRI Shapefile, with broken records or missing data\n");
             printf("  F: Not a valid ESRI Shapefile\n");
+            printf("\n");
+            printf("  If an output filename is specified, the validation will be performed on this file\n");
         }
         else
         {
@@ -173,7 +170,18 @@ namespace reshp
                 }
                 else if(argc > o + 1)
                 {
+                    enum
+                    {
+                        action_none         = 0x00,
+                        action_cleanup      = 0x01,
+                        action_output       = 0x02,
+                        action_subtract     = 0x04,
+                        action_validate     = 0x08
+                    };
+                    
                     std::string filename(argv[o]);
+                    std::string input, output;
+                    unsigned action = action_none;
                     
                     // Parse parameters
                     for(int p = o + 1; p < argc; ++p)
@@ -190,8 +198,8 @@ namespace reshp
                         {
                             if(argc > p + 1)
                             {
-                                std::string maskfile(argv[p + 1]);
-                                subtract(filename, maskfile);
+                                input = argv[p + 1];
+                                action |= action_subtract;
                                 ++p;
                             }
                             else
@@ -200,9 +208,23 @@ namespace reshp
                                 printf("Try '%s --help subtract' for more information\n", exe_name_.c_str());
                             }
                         }
+                        else if(argcmp(argv[p], "--output", "-o"))
+                        {
+                            if(argc > p + 1)
+                            {
+                                output = std::string(argv[p + 1]);
+                                action |= action_output;
+                                ++p;
+                            }
+                            else
+                            {
+                                printf("missing filename for shapefile output\n");
+                                printf("Try '%s --help output' for more information\n", exe_name_.c_str());
+                            }
+                        }    
                         else if(argcmp(argv[p], "--validate", "-V"))
                         {
-                            validate(filename);
+                            action |= action_validate;
                         }
                         else
                         {
@@ -210,6 +232,14 @@ namespace reshp
                             printf("Try '%s --help' for more information\n", exe_name_.c_str());
                         }
                     }
+                    
+                    // Perform subtraction if specified
+                    if(action & action_subtract)
+                        subtract(filename, input, (action & action_output ? output.c_str() : NULL));
+                    
+                    // Perform validation if specified
+                    if(action & action_validate)
+                        validate(action & action_output ? output : filename);
                     
                     break;
                 }
