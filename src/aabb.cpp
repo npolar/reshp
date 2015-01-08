@@ -66,4 +66,22 @@ namespace reshp
         return (((other.min.x > min.x && other.min.x < max.x) || (other.max.x > min.x && other.max.x < max.x)) && 
                 ((other.min.y > min.y && other.min.y < max.y) || (other.max.y > min.y && other.max.y < max.y)));
     }
+    
+    void aabb::operator>> (double (&xy)[4])
+    {
+        xy[0] = min.x;
+        xy[1] = min.y;
+        xy[2] = max.x;
+        xy[3] = max.y;
+    }
+    
+    void aabb::operator>> (double (&xyz)[6])
+    {
+        xyz[0] = min.x;
+        xyz[1] = min.y;
+        xyz[2] = min.z;
+        xyz[3] = max.x;
+        xyz[4] = max.y;
+        xyz[5] = max.z;
+    }
 }

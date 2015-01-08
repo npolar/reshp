@@ -27,6 +27,9 @@ namespace reshp
         void initialize();
         bool inside(const reshp::aabb&) const;
         bool intersects(const reshp::aabb&) const;
+        
+        void operator>> (double (&)[4]); // Xmin, Ymin, Xmax, Ymax
+        void operator>> (double (&)[6]); // Xmin, Ymin, Zmin, Xmax, Ymax, Zmax
     };
 }
 
