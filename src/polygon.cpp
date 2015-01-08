@@ -253,11 +253,9 @@ namespace reshp
                     poly.parts[poly.num_parts++] = poly.num_points;
                     
                     for(unsigned s = 0; s < rings[r].segments.size(); ++s)
-                    {
-                        poly.points[++poly.num_points] = reshp::shp::point(rings[r].segments[s].start.x, rings[r].segments[s].start.y);
-                    }
+                        poly.points[poly.num_points++] = reshp::shp::point(rings[r].segments[s].start.x, rings[r].segments[s].start.y);
                     
-                    poly.points[++poly.num_points] = reshp::shp::point(rings[r].segments[0].start.x, rings[r].segments[0].start.y);
+                    poly.points[poly.num_points++] = reshp::shp::point(rings[r].segments[0].start.x, rings[r].segments[0].start.y);
                 }
             }
         }
