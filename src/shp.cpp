@@ -555,6 +555,8 @@ namespace reshp
         
         if(file.open(filename, reshp::file::mode::write | reshp::file::mode::binary))
         {
+            file.clear();
+            
             // Write shapefile header
             if(!file.puti(header.identifier, endian::big)
             || !file.write(reinterpret_cast<char*>(header.unused), sizeof(header.unused))

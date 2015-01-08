@@ -210,7 +210,7 @@ namespace reshp
         {
             fmodes[m++] = (file_exists ? 'r' : 'w');
             
-            if(!file_exists || (modes & file::mode::read))
+            if(file_exists || (modes & file::mode::read))
                 fmodes[m++] = '+';
         }
         else if(modes & file::mode::read)
