@@ -553,7 +553,7 @@ namespace reshp
     {
         reshp::file file;
         
-        if(!file.open(filename, reshp::file::mode::write | reshp::file::mode::binary))
+        if(file.open(filename, reshp::file::mode::write | reshp::file::mode::binary))
         {
             // Write shapefile header
             if(!file.puti(header.identifier, endian::big)
@@ -581,9 +581,7 @@ namespace reshp
             {
                 reshp::shp::record& record = records[i];
                 int32_t recordlen = 6; // Numer, Length, Type
-                
-                if(!record.length)
-                    record.length = recordlen;
+                long header_start = file.tell();
                 
                 if(!record.number)
                     record.number = (i + 1);
@@ -774,16 +772,25 @@ namespace reshp
                         return false;
                 }
                 
+                if(!record.length)
+                    record.length = recordlen;
+                
                 if(record.length != recordlen)
                 {
                     if(errorlog) fprintf(stderr, "record header length mismatch for record: #%i (%i, expected %i)\n", record.number, record.length, recordlen);
                     return false;
                 }
                 else filelen += (record.length * 2);
+                
+                // Rewrite record length in record header
+                long record_end = file.tell();
+                file.seek(header_start + 2); // record.length
+                file.puti(recordlen, endian::big);
+                file.seek(record_end);
             } // records
             
+            // Rewrite file length in file header
             
-            // Rewrite file length in header
             file.seek(24); // header.length
             file.puti((header.length = (filelen / 2)), endian::big);
             
