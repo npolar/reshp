@@ -17,7 +17,7 @@
 
 namespace reshp
 {
-    void handler::subtract(const std::string& basefile, const std::string& maskfile)
+    void handler::subtract(const std::string& basefile, const std::string& maskfile, const char* outputfile)
     {
         if(verbose_)
             printf("subtract '%s' from '%s'\n", maskfile.c_str(), basefile.c_str());
@@ -129,5 +129,27 @@ namespace reshp
                 }
             } // maskpolys
         } // basepolys
+        
+        if(outputfile)
+        {
+            reshp::shp output;
+            
+            for(unsigned p = 0; p < basepolys.size(); ++p)
+            {
+                reshp::shp::record record;
+                
+                if((record.polygon = new (std::nothrow) reshp::shp::polygon()))
+                {
+                    record.shape = record.polygon; // Automatically deallocates record.polygon on output dtor
+                    record.type = reshp::shp::shape::polygon;
+                    basepolys[p].calculate_aabb();
+                    basepolys[p] >> *record.polygon;
+                    
+                    output.records.push_back(record);
+                }
+            }
+            
+            output.save(outputfile, verbose_);
+        }
     } // handler::subtract()
 } // namespace reshp
