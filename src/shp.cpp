@@ -581,8 +581,8 @@ namespace reshp
             for(unsigned i = 0; i < records.size(); ++i)
             {
                 reshp::shp::record& record = records[i];
-                int32_t recordlen = 6; // Numer, Length, Type
                 long header_start = file.tell();
+                int32_t recordlen = 0;
                 
                 if(!record.number)
                     record.number = (i + 1);
@@ -594,6 +594,7 @@ namespace reshp
                     if(errorlog) fprintf(stderr, "could not write shapefile record header to: %s (index %u)\n", filename.c_str(), i);
                     return false;
                 }
+                else recordlen += 2; // Type (Number and Length excluded)
                 
                 if(record.type == shp::shape::null)
                 {
@@ -781,7 +782,7 @@ namespace reshp
                     if(errorlog) fprintf(stderr, "record header length mismatch for record: #%i (%i, expected %i)\n", record.number, record.length, recordlen);
                     return false;
                 }
-                else filelen += (record.length * 2);
+                else filelen += (record.length + 4) * 2; // Include Number and Length
                 
                 // Rewrite record length in record header
                 long record_end = file.tell();
