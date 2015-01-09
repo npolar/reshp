@@ -14,6 +14,7 @@
 #define RESHP_HANDLER_HPP_
 
 #include "shp.hpp"
+#include "shx.hpp"
 #include <string>
 
 namespace reshp

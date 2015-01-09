@@ -241,6 +241,41 @@ namespace reshp
                     if(action & action_validate)
                         validate(action & action_output ? output : filename);
                     
+                    // Output only
+                    if(action == action_output)
+                    {
+                        reshp::shp shpout;
+                        reshp::shx shxout;
+                        
+                        if(verbose_)
+                        {
+                            printf("output '%s' to '%s'\n",  filename.c_str(), output.c_str());
+                        }
+                        
+                        if(shpout.load(filename))
+                        {
+                            if(verbose_)
+                                printf("  writing shapefile to '%s'\n", output.c_str());
+                            
+                            if(shpout.save(output, verbose_))
+                            {
+                                if(shxout.load(shpout, verbose_))
+                                {
+                                    std::string shxname(output);
+                                    
+                                    if(shxname.substr(shxname.length() - 4) == ".shp")
+                                        shxname.replace(shxname.length() - 4, 4, ".shx");
+                                    else shxname += ".shx";
+                                    
+                                    if(verbose_)
+                                        printf("  writing shapefile index to '%s'\n", shxname.c_str());
+                                    
+                                    shxout.save(shxname, verbose_);
+                                }
+                            }
+                        }
+                    }
+                    
                     break;
                 }
             }
