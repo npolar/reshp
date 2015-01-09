@@ -105,6 +105,7 @@ namespace reshp
                                 printf("      outer ring #%u added to base polygon as inner ring\n", r);
                             
                             basepolys[bpoly].rings.push_back(maskpolys[mpoly].rings[r]);
+                            basepolys[bpoly].rings.back().type = reshp::polygon::ring::inner;
                         }
                         else printf("      ignored inner ring #%u in mask polygon\n", r);
                     }
@@ -118,14 +119,39 @@ namespace reshp
                 if(maskpolys[mpoly].intersects(basepolys[bpoly], &intersections))
                 {
                     if(verbose_)
-                    {
                         printf("    %lu intersections found between base polygon #%u and mask polygon #%u:\n", intersections.size(), bpoly, mpoly);
                         
-                        for(unsigned i = 0; i < intersections.size(); ++i)
+                    for(unsigned i = 0; i < intersections.size(); ++i)
+                    {
+                        if(verbose_)
                             printf("      %f, %f\n", intersections[i].point.x, intersections[i].point.y);
+                        
+                        /* TODO:
+                        // Add intersection point as segment start/end point of intersector
+                        if(maskpolys[mpoly].contains(intersections[i].intersector.segment->start))
+                            intersections[i].intersector.segment->start = intersections[i].point;
+                        else if(maskpolys[mpoly].contains(intersections[i].intersector.segment->end))
+                            intersections[i].intersector.segment->end = intersections[i].point;
+                        */
+                        
+                        /* TODO:
+                        // Add segments between intersector points of mask polygon to base polygon intersector ring
+                        if(basepolys[bpoly].contains(intersections[i].segment->start))
+                        {
+                            intersections[i].intersector.ring->segments.insert(
+                                intersections[i].intersector.ring->segments.begin() + intersections[i].intersector.segment_index + 1,
+                                reshp::segment(intersections[i].point, intersections[i].segment->start)
+                            );
+                        }
+                        else if(maskpolys[mpoly].contains(intersections[i].segment->end))
+                        {
+                            intersections[i].intersector.ring->segments.insert(
+                                intersections[i].intersector.ring->segments.begin() + intersections[i].intersector.segment_index + 1,
+                                reshp::segment(intersections[i].point, intersections[i].segment->end)
+                            );
+                        }
+                        */
                     }
-                    
-                    // TODO: Add points to base polygon outer ring
                 }
             } // maskpolys
         } // basepolys
@@ -142,8 +168,11 @@ namespace reshp
                 {
                     record.shape = record.polygon; // Automatically deallocates record.polygon on output dtor
                     record.type = reshp::shp::shape::polygon;
+                    
                     basepolys[p].calculate_aabb();
                     basepolys[p] >> *record.polygon;
+                    basepolys[p].aabb >> output.header.box;
+                    output.header.type = reshp::shp::shape::polygon;
                     
                     output.records.push_back(record);
                 }
