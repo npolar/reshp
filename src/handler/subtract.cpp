@@ -12,6 +12,8 @@
 
 #include "../handler.hpp"
 #include "../polygon.hpp"
+#include "../shx.hpp"
+
 #include <vector>
 #include <cstdio>
 
@@ -178,7 +180,21 @@ namespace reshp
                 }
             }
             
-            output.save(outputfile, verbose_);
+            if(output.save(outputfile, verbose_))
+            {
+                reshp::shx indexfile;
+                
+                if(indexfile.load(output, verbose_))
+                {
+                    std::string indexfilename(outputfile);
+                    
+                    if(indexfilename.substr(indexfilename.length() - 4) == ".shp")
+                        indexfilename.replace(indexfilename.length() - 4, 4, ".shx");
+                    else indexfilename += ".shx";
+                    
+                    indexfile.save(indexfilename, verbose_);
+                }
+            }
         }
     } // handler::subtract()
 } // namespace reshp
