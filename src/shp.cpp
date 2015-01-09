@@ -785,7 +785,7 @@ namespace reshp
                 
                 // Rewrite record length in record header
                 long record_end = file.tell();
-                file.seek(header_start + 2); // record.length
+                file.seek(header_start + 4); // record.length
                 file.puti(recordlen, endian::big);
                 file.seek(record_end);
             } // records
