@@ -30,11 +30,13 @@ namespace reshp
             reshp::point point;
             reshp::polygon::ring* ring;
             reshp::segment* segment;
+            int segment_index;
             
             struct intersector
             {
                 reshp::polygon::ring* ring;
                 reshp::segment* segment;
+                int segment_index;
                 
                 intersector(reshp::polygon::ring* = NULL);
             } intersector;

@@ -19,13 +19,15 @@ namespace reshp
     polygon::intersection::intersection(reshp::polygon::ring* ring, reshp::polygon::ring* intersector_ring) : 
         ring(ring),
         segment(NULL),
+        segment_index(-1),
         intersector(intersector_ring)
     {
     }
     
     polygon::intersection::intersector::intersector(reshp::polygon::ring* ring) :
         ring(ring),
-        segment(NULL)
+        segment(NULL),
+        segment_index(-1)
     {
     }
     
@@ -101,10 +103,12 @@ namespace reshp
         for(unsigned tseg = 0; tseg < this->segments.size(); ++tseg)
         {
             intersection.segment = &mutable_this->segments[tseg];
+            intersection.segment_index = tseg;
             
             for(unsigned oseg = 0; oseg < other.segments.size(); ++oseg)
             {
                 intersection.intersector.segment = &mutable_other->segments[oseg];
+                intersection.intersector.segment_index = oseg;
                 
                 if(intersection.segment->intersects(*intersection.intersector.segment, &intersection.point))
                 {
