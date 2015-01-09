@@ -123,20 +123,33 @@ namespace reshp
                     if(verbose_)
                         printf("    %lu intersections found between base polygon #%u and mask polygon #%u:\n", intersections.size(), bpoly, mpoly);
                         
-                    for(unsigned i = 0; i < intersections.size(); ++i)
+                    for(unsigned i = 0; i < intersections.size(); i += 2)
                     {
                         if(verbose_)
                             printf("      %f, %f\n", intersections[i].point.x, intersections[i].point.y);
                         
                         /* TODO:
-                        // Add intersection point as segment start/end point of intersector
-                        if(maskpolys[mpoly].contains(intersections[i].intersector.segment->start))
-                            intersections[i].intersector.segment->start = intersections[i].point;
-                        else if(maskpolys[mpoly].contains(intersections[i].intersector.segment->end))
-                            intersections[i].intersector.segment->end = intersections[i].point;
-                        */
+                         * - Add intersection point as segment start/end
+                         * - Add mask polygon points between the two intersection points
+                         * - Remove base polygon points between the two intersection points
+                         */
                         
-                        /* TODO:
+                        reshp::polygon::intersection& start = intersections[i];
+                        reshp::polygon::intersection& end = intersections[i + 1];
+                        
+                        // Add intersection start point as segment start/end point of start intersector
+                        if(maskpolys[mpoly].contains(start.intersector.segment->start))
+                            start.intersector.segment->start = start.point;
+                        else if(maskpolys[mpoly].contains(start.intersector.segment->end))
+                            start.intersector.segment->end = start.point;
+                        
+                        // Add intersection end point as segment start/end point of end intersector
+                        if(maskpolys[mpoly].contains(end.intersector.segment->start))
+                            end.intersector.segment->start = end.point;
+                        else if(maskpolys[mpoly].contains(end.intersector.segment->end))
+                            end.intersector.segment->end = end.point;
+                        
+                        /*
                         // Add segments between intersector points of mask polygon to base polygon intersector ring
                         if(basepolys[bpoly].contains(intersections[i].segment->start))
                         {
