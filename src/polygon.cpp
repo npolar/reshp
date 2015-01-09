@@ -157,8 +157,8 @@ namespace reshp
             
             int sum = 0;
             
-            for(unsigned s = 0, ss = ring.segments.size(); s < ss; ++s)
-                sum += (ring.segments[s].end.x - ring.segments[s].start.x) * (ring.segments[s].end.y - ring.segments[s].start.y);
+            for(unsigned s = 0; s < ring.segments.size(); ++s)
+                sum += (ring.segments[s].end.x - ring.segments[s].start.x) * (ring.segments[s].end.y + ring.segments[s].start.y);
             
             // Clockwise: Outer, Counter-clockwise: Inner
             ring.type = (sum > 0 ? ring::outer : ring::inner);
