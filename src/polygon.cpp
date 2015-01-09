@@ -155,14 +155,13 @@ namespace reshp
                     break;
             }
             
-            if(ring.segments.size() >= 3)
-            {
-                int dir = (((ring.segments[0].end.y - ring.segments[0].start.y) * (ring.segments[1].end.x - ring.segments[1].start.x)) -
-                           ((ring.segments[0].end.x - ring.segments[0].start.x) * (ring.segments[1].end.y - ring.segments[1].start.y)));
-                
-                // Clockwise: Outer, Counter-clockwise: Inner
-                ring.type = (dir > 0 ? ring::outer : ring::inner);
-            }
+            int sum = 0;
+            
+            for(unsigned s = 0, ss = ring.segments.size(); s < ss; ++s)
+                sum += (ring.segments[s].end.x - ring.segments[s].start.x) * (ring.segments[s].end.y - ring.segments[s].start.y);
+            
+            // Clockwise: Outer, Counter-clockwise: Inner
+            ring.type = (sum > 0 ? ring::outer : ring::inner);
             
             ring.calculate_aabb();
             rings.push_back(ring);
