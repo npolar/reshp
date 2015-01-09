@@ -14,9 +14,8 @@
 #include "file.hpp"
 
 #include <new>
-#include <cfloat>
 #include <cstdio>
-#include <algorithm>
+#include <cstring>
 
 namespace reshp
 {
