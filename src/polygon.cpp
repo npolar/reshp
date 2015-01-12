@@ -44,8 +44,11 @@ namespace reshp
         {
             aabb.min.x = std::min(aabb.min.x, segments[i].start.x);
             aabb.min.y = std::min(aabb.min.y, segments[i].start.y);
+            aabb.min.z = std::min(aabb.min.z, segments[i].start.z);
+            
             aabb.max.x = std::max(aabb.max.x, segments[i].start.x);
             aabb.max.y = std::max(aabb.max.y, segments[i].start.y);
+            aabb.max.z = std::max(aabb.max.z, segments[i].start.z);
         }
     }
     
@@ -176,10 +179,15 @@ namespace reshp
         
         for(unsigned i = 0; i < rings.size(); ++i)
         {
+            rings[i].calculate_aabb();
+            
             aabb.min.x = std::min(aabb.min.x, rings[i].aabb.min.x);
             aabb.min.y = std::min(aabb.min.y, rings[i].aabb.min.y);
+            aabb.min.z = std::min(aabb.min.z, rings[i].aabb.min.z);
+            
             aabb.max.x = std::max(aabb.max.x, rings[i].aabb.max.x);
             aabb.max.y = std::max(aabb.max.y, rings[i].aabb.max.y);
+            aabb.max.z = std::max(aabb.max.z, rings[i].aabb.max.z);
         }
     }
     
@@ -193,9 +201,8 @@ namespace reshp
             if(rings[r].contains(point))
             {
                 if(rings[r].type == reshp::polygon::ring::inner)
-                {
                     return false;
-                }
+                
                 else if(!inside)
                     inside = true;
             }
