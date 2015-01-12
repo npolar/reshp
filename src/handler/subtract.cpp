@@ -116,6 +116,7 @@ namespace reshp
                 }
                 
                 std::vector<reshp::polygon::intersection> intersections;
+                std::vector<reshp::polygon::ring> rings;
                 
                 // Mask polygon intersects base polygon
                 if(maskpolys[mpoly].intersects(basepolys[bpoly], &intersections))
@@ -123,50 +124,61 @@ namespace reshp
                     if(verbose_)
                         printf("    %lu intersections found between base polygon #%u and mask polygon #%u:\n", intersections.size(), bpoly, mpoly);
                         
-                    for(unsigned i = 0; i < intersections.size(); i += 2)
+                    for(unsigned i = 0; i < intersections.size(); ++i)
                     {
                         if(verbose_)
-                            printf("      %f, %f\n", intersections[i].point.x, intersections[i].point.y);
+                            printf("      [%8.4f, %8.4f]\n", intersections[i].point.x, intersections[i].point.y);
                         
-                        /* TODO:
-                         * - Add intersection point as segment start/end
-                         * - Add mask polygon points between the two intersection points
-                         * - Remove base polygon points between the two intersection points
-                         */
-                        
-                        reshp::polygon::intersection& start = intersections[i];
-                        reshp::polygon::intersection& end = intersections[i + 1];
-                        
-                        // Add intersection start point as segment start/end point of start intersector
-                        if(maskpolys[mpoly].contains(start.intersector.segment->start))
-                            start.intersector.segment->start = start.point;
-                        else if(maskpolys[mpoly].contains(start.intersector.segment->end))
-                            start.intersector.segment->end = start.point;
-                        
-                        // Add intersection end point as segment start/end point of end intersector
-                        if(maskpolys[mpoly].contains(end.intersector.segment->start))
-                            end.intersector.segment->start = end.point;
-                        else if(maskpolys[mpoly].contains(end.intersector.segment->end))
-                            end.intersector.segment->end = end.point;
-                        
-                        /*
-                        // Add segments between intersector points of mask polygon to base polygon intersector ring
                         if(basepolys[bpoly].contains(intersections[i].segment->start))
                         {
-                            intersections[i].intersector.ring->segments.insert(
-                                intersections[i].intersector.ring->segments.begin() + intersections[i].intersector.segment_index + 1,
-                                reshp::segment(intersections[i].point, intersections[i].segment->start)
-                            );
+                            bool done = false;
+                            reshp::polygon::ring ring; // outer by default
+                            
+                            for(unsigned n = 0, s = intersections[i].segment_index; !done && n < intersections[i].ring->segments.size(); ++n)
+                            {
+                                int tindex = -1;
+                                reshp::point intersection;
+                                reshp::segment segment((n ? intersections[i].ring->segments[s].end : intersections[i].point), intersections[i].ring->segments[s].start);
+                                
+                                for(unsigned t = 0; n && t < intersections[i].intersector.ring->segments.size(); ++t)
+                                {
+                                    if(segment.intersects(intersections[i].intersector.ring->segments[t], &intersection))
+                                    {
+                                        segment.end = intersection;
+                                        tindex = t;
+                                        break;
+                                    }
+                                }
+                                
+                                ring.segments.push_back(segment);
+                                
+                                if(tindex >= 0)
+                                {
+                                    for(unsigned o = 0, t = tindex; !done && o < intersections[i].intersector.ring->segments.size(); ++o)
+                                    {
+                                        segment = reshp::segment((o ? intersections[i].intersector.ring->segments[t].start : intersection), intersections[i].intersector.ring->segments[t].end);
+                                        
+                                        if(t == static_cast<unsigned>(intersections[i].intersector.segment_index))
+                                        {
+                                            segment.end = intersections[i].point;
+                                            done = true;
+                                        }
+                                        
+                                        ring.segments.push_back(segment);
+                                        
+                                        t = (t < intersections[i].intersector.ring->segments.size() - 1 ? t + 1 : 0);
+                                    }
+                                }
+                                
+                                s = (s ? s - 1 : intersections[i].ring->segments.size() - 1);
+                            }
+                            
+                            rings.push_back(ring);
                         }
-                        else if(maskpolys[mpoly].contains(intersections[i].segment->end))
-                        {
-                            intersections[i].intersector.ring->segments.insert(
-                                intersections[i].intersector.ring->segments.begin() + intersections[i].intersector.segment_index + 1,
-                                reshp::segment(intersections[i].point, intersections[i].segment->end)
-                            );
-                        }
-                        */
                     }
+                    
+                    basepolys[bpoly].rings = rings;
+                    basepolys[bpoly].calculate_aabb();
                 }
             } // maskpolys
         } // basepolys
