@@ -37,8 +37,8 @@ namespace reshp
     
     void aabb::initialize()
     {
-        min = reshp::point( DBL_MAX,  DBL_MAX, 0.0);
-        max = reshp::point(-DBL_MAX, -DBL_MAX, 0.0);
+        min = reshp::point( DBL_MAX,  DBL_MAX,  DBL_MAX);
+        max = reshp::point(-DBL_MAX, -DBL_MAX, -DBL_MAX);
     }
     
     bool aabb::inside(const reshp::aabb& other) const
