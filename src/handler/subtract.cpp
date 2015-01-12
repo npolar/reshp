@@ -109,7 +109,8 @@ namespace reshp
                             basepolys[bpoly].rings.push_back(maskpolys[mpoly].rings[r]);
                             basepolys[bpoly].rings.back().type = reshp::polygon::ring::inner;
                         }
-                        else printf("      ignored inner ring #%u in mask polygon\n", r);
+                        else if(verbose_)
+                            printf("      ignored inner ring #%u in mask polygon\n", r);
                     }
                     
                     continue;
