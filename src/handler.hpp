@@ -29,10 +29,10 @@ namespace reshp
         
         bool argcmp(const char* arg, const char* opt1, const char* opt2 = NULL);
         
+        void grade(const std::string& shapefile);
         void help(const char* topic = NULL);
         void list(const std::string& shapefile, const bool full = false);
         void subtract(const std::string& basefile, const std::string& maskfile, const char* outputfile = NULL);
-        void validate(const std::string& shapefile);
         
     public:
         handler(int argc, char** argv, const char* version);

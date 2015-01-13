@@ -45,11 +45,11 @@ namespace reshp
             
             printf("\nShapefile parameters:\n");
             //printf("  -a, --add <type> <property>...    add record with specified type and properties to shapefile\n");
+            printf("  -g, --grade                       grade the shapefile ranging from A (best) to F (worst)\n");
             printf("  -l, --list                        list various information about the shapefile\n");
             printf("  -L, --list-full                   list full information about the shapefile, including coordinates\n");
             printf("  -o, --output <filename>           output (save) modified shapefile to specified filename\n");
             printf("  -s, --subtract <input>            subtract input shapefile shapes from shapefile\n");
-            printf("  -V, --validate                    validate the shapefile with a grade ranging from A to F\n");
         }
         /*
         else if(argcmp(topic, "add", "a"))
@@ -74,6 +74,19 @@ namespace reshp
             printf("  <z>       z coordinate as floating number\n");
         }
         */
+        else if(argcmp(topic, "grade", "g"))
+        {
+            printf("%s --grade\n", exe_name_.c_str());
+            printf("Validate the shapefile, and output one of the following grades:\n");
+            printf("  A: Valid ESRI Shapefile, which completely complies with the specifications\n");
+            printf("  B: Valid ESRI Shapefile, with valid data and clean shapes according to the specifications\n");
+            printf("  C: Valid ESRI Shapefile, with valid data and no self-intersecting shapes\n");
+            printf("  D: Valid ESRI Shapefile, with no broken records or missing data\n");
+            printf("  E: Valid ESRI Shapefile, with broken records or missing data\n");
+            printf("  F: Not a valid ESRI Shapefile\n");
+            printf("\n");
+            printf("  If an output filename is specified, the grading will be performed on this file\n");
+        }
         else if(argcmp(topic, "list", "l"))
         {
             printf("%s <shapefile> --list\n", exe_name_.c_str());
@@ -93,19 +106,6 @@ namespace reshp
         {
             printf("%s --verbose [shapefile <parameter>...]\n", exe_name_.c_str());
             printf("Enable verbose output of certain manipulation operations.\n");
-        }
-        else if(argcmp(topic, "validate", "V"))
-        {
-            printf("%s --validate\n", exe_name_.c_str());
-            printf("Validate the shapefile, and output one of the following grades:\n");
-            printf("  A: Valid ESRI Shapefile, which completely complies with the specifications\n");
-            printf("  B: Valid ESRI Shapefile, with valid data and clean shapes according to the specifications\n");
-            printf("  C: Valid ESRI Shapefile, with valid data and no self-intersecting shapes\n");
-            printf("  D: Valid ESRI Shapefile, with no broken records or missing data\n");
-            printf("  E: Valid ESRI Shapefile, with broken records or missing data\n");
-            printf("  F: Not a valid ESRI Shapefile\n");
-            printf("\n");
-            printf("  If an output filename is specified, the validation will be performed on this file\n");
         }
         else
         {
@@ -174,9 +174,10 @@ namespace reshp
                     {
                         action_none         = 0x00,
                         action_cleanup      = 0x01,
-                        action_output       = 0x02,
-                        action_subtract     = 0x04,
-                        action_validate     = 0x08
+                        action_grade        = 0x02,
+                        action_output       = 0x04,
+                        action_subtract     = 0x08
+                        
                     };
                     
                     std::string filename(argv[o]);
@@ -186,13 +187,31 @@ namespace reshp
                     // Parse parameters
                     for(int p = o + 1; p < argc; ++p)
                     {
-                        if(argcmp(argv[p], "--list", "-l"))
+                        if(argcmp(argv[p], "--grade", "-g"))
+                        {
+                            action |= action_gade;
+                        }
+                        else if(argcmp(argv[p], "--list", "-l"))
                         {
                             list(filename, false);
                         }
                         else if(argcmp(argv[p], "--list-full", "-L"))
                         {
                             list(filename, true);
+                        }
+                        else if(argcmp(argv[p], "--output", "-o"))
+                        {
+                            if(argc > p + 1)
+                            {
+                                output = std::string(argv[p + 1]);
+                                action |= action_output;
+                                ++p;
+                            }
+                            else
+                            {
+                                printf("missing filename for shapefile output\n");
+                                printf("Try '%s --help output' for more information\n", exe_name_.c_str());
+                            }
                         }
                         else if(argcmp(argv[p], "--subtract", "-s"))
                         {
@@ -208,24 +227,6 @@ namespace reshp
                                 printf("Try '%s --help subtract' for more information\n", exe_name_.c_str());
                             }
                         }
-                        else if(argcmp(argv[p], "--output", "-o"))
-                        {
-                            if(argc > p + 1)
-                            {
-                                output = std::string(argv[p + 1]);
-                                action |= action_output;
-                                ++p;
-                            }
-                            else
-                            {
-                                printf("missing filename for shapefile output\n");
-                                printf("Try '%s --help output' for more information\n", exe_name_.c_str());
-                            }
-                        }    
-                        else if(argcmp(argv[p], "--validate", "-V"))
-                        {
-                            action |= action_validate;
-                        }
                         else
                         {
                             printf("unrecognized parameter: %s\n", argv[p]);
@@ -238,8 +239,8 @@ namespace reshp
                         subtract(filename, input, (action & action_output ? output.c_str() : NULL));
                     
                     // Perform validation if specified
-                    if(action & action_validate)
-                        validate(action & action_output ? output : filename);
+                    if(action & action_grade)
+                        grade(action & action_output ? output : filename);
                     
                     // Output only
                     if(action == action_output)

@@ -17,7 +17,7 @@
 
 namespace reshp
 {
-    void handler::validate(const std::string& shapefile)
+    void handler::grade(const std::string& shapefile)
     {
         /*
         A: Valid ESRI Shapefile, which completely complies with the specifications
@@ -96,5 +96,5 @@ namespace reshp
             grade = 'B';
         
         printf("%c\n", grade);
-    } // handler::validate()
+    } // handler::grade()
 } // namespace reshp
