@@ -189,7 +189,7 @@ namespace reshp
                     {
                         if(argcmp(argv[p], "--grade", "-g"))
                         {
-                            action |= action_gade;
+                            action |= action_grade;
                         }
                         else if(argcmp(argv[p], "--list", "-l"))
                         {
