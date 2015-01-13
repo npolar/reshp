@@ -80,8 +80,6 @@ namespace reshp
     
     bool polygon::ring::intersects() const
     {
-        // TODO: Efficiency test
-        
         for(unsigned i = 0, s = segments.size(); i < s - 2; ++i)
             for(unsigned j = i + 1; j < segments.size(); ++j)
                 if(j - i > 1 && j < (s - 1) + i)
