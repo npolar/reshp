@@ -39,17 +39,6 @@ namespace reshp
                 reshp::polygon poly(*shp.records[i].polygon);
                 unsigned index = polys.size(), outer_rings = 0;
                 
-                /*
-                // Remove self-intersecting polygons
-                if(poly.intersects())
-                {
-                    if(verbose_)
-                        printf("    removed self-intersecting polygon (record #%u)\n", i);
-                    
-                    continue;
-                }
-                */
-                
                 // Add missing segments for polygon rings
                 for(unsigned r = 0; r < poly.rings.size(); ++r)
                 {
@@ -72,29 +61,26 @@ namespace reshp
                      */
                 }
                 
+                // Invert contained outer-rings and non-contained inner-rings
                 for(unsigned r = 0; r < poly.rings.size(); ++r)
                 {
-                    // Invert inner-rings not contained within an outer-ring
-                    if(poly.rings[r].type == reshp::polygon::ring::inner)
+                    bool inside = false, inner = (poly.rings[r].type == reshp::polygon::ring::inner);
+                    
+                    for(unsigned o = 0; o < poly.rings.size(); ++o)
                     {
-                        bool inside = false;
-                        
-                        for(unsigned o = 0; o < poly.rings.size(); ++o)
+                        if(o != r && poly.rings[r].inside(poly.rings[o]))
                         {
-                            if(o != r && poly.rings[r].inside(poly.rings[o]))
-                            {
-                                inside = true;
-                                break;
-                            }
+                            inside = true;
+                            break;
                         }
+                    }
+                    
+                    if(inner != inside)
+                    {
+                        if(verbose_)
+                            printf("    inverting %s-ring %u to %s-ring in polygon %u\n", (inner ? "inner" : "outer"), r, (inner ? "outer" : "inner"), index);
                         
-                        if(!inside)
-                        {
-                            if(verbose_)
-                                printf("    inverting inner-ring %u to outer-ring in polygon %u\n", r, index);
-                            
-                            poly.rings[r].invert();
-                        }
+                        poly.rings[r].invert();
                     }
                 }
                 
@@ -107,8 +93,26 @@ namespace reshp
             }
         }
         
-        // TODO: Recalculate file header data
-
+        // Push contained polyons as inner rings
+        for(unsigned p = 0; p < polys.size(); ++p)
+        {
+            for(unsigned q = 0; q < polys.size(); ++q)
+            {
+                if(q != p && polys[p].inside(polys[q]))
+                {
+                    for(unsigned r = 0; r < polys[p].rings.size(); ++r)
+                    {
+                        polys[p].rings[r].invert();
+                        polys[q].rings.push_back(polys[p].rings[r]);
+                    }
+                    
+                    polys.erase(polys.begin() + (p--));
+                    break;
+                }
+            }
+        }
+        
+        
         if(outputfile)
         {
             reshp::aabb aabb;
