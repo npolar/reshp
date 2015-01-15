@@ -29,6 +29,7 @@ namespace reshp
         
         bool argcmp(const char* arg, const char* opt1, const char* opt2 = NULL);
         
+        void cleanup(const std::string& shapefile, const char* outputfile = NULL);
         void grade(const std::string& shapefile);
         void help(const char* topic = NULL);
         void list(const std::string& shapefile, const bool full = false);

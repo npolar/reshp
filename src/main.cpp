@@ -15,6 +15,6 @@
 int main(int argc, char* argv[])
 {
     // TODO: Update version number
-    reshp::handler reshp(argc, argv, "0.4.0");
+    reshp::handler reshp(argc, argv, "0.4.1");
     return reshp.run();
 }

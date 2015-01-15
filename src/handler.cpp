@@ -45,10 +45,11 @@ namespace reshp
             
             printf("\nShapefile parameters:\n");
             //printf("  -a, --add <type> <property>...    add record with specified type and properties to shapefile\n");
+            printf("  -c, --cleanup                     attempt to cleanup a dirty/broken shapefile\n");
             printf("  -g, --grade                       grade the shapefile ranging from A (best) to F (worst)\n");
             printf("  -l, --list                        list various information about the shapefile\n");
             printf("  -L, --list-full                   list full information about the shapefile, including coordinates\n");
-            printf("  -o, --output <filename>           output (save) modified shapefile to specified filename\n");
+            printf("  -o, --output <filename>           output/save (modified) shapefile to specified filename\n");
             printf("  -s, --subtract <input>            subtract input shapefile shapes from shapefile\n");
         }
         /*
@@ -74,9 +75,22 @@ namespace reshp
             printf("  <z>       z coordinate as floating number\n");
         }
         */
+        else if(argcmp(topic, "cleanup", "c"))
+        {
+            printf("%s <shapefile> --cleanup\n", exe_name_.c_str());
+            printf("Attempt to cleanup broken parts of the shapefile as follows:\n");
+            printf("  * Ensure properly closed rings in shapes\n");
+            printf("  * Ensure clockwise ring-direction (outer ring) for single-ringed shapes\n");
+            printf("  * Remove self-intersections\n");
+            printf("  * Remove inner rings intersecting outer rings\n");
+            printf("  * Remove shapes with unfixable missing data\n");
+            printf("  * Recalculate ring-directions for multi-ringed shapes\n");
+            printf("  * Recalculate bounding boxes\n");
+            printf("  * Recalculate file header data\n");
+        }
         else if(argcmp(topic, "grade", "g"))
         {
-            printf("%s --grade\n", exe_name_.c_str());
+            printf("%s <shapefile> --grade\n", exe_name_.c_str());
             printf("Validate the shapefile, and output one of the following grades:\n");
             printf("  A: Valid ESRI Shapefile, which completely complies with the specifications\n");
             printf("  B: Valid ESRI Shapefile, with valid data and clean shapes according to the specifications\n");
@@ -187,7 +201,11 @@ namespace reshp
                     // Parse parameters
                     for(int p = o + 1; p < argc; ++p)
                     {
-                        if(argcmp(argv[p], "--grade", "-g"))
+                        if(argcmp(argv[p], "--cleanup", "-c"))
+                        {
+                            action |= action_cleanup;
+                        }
+                        else if(argcmp(argv[p], "--grade", "-g"))
                         {
                             action |= action_grade;
                         }
@@ -233,6 +251,10 @@ namespace reshp
                             printf("Try '%s --help' for more information\n", exe_name_.c_str());
                         }
                     }
+                    
+                    // Perform shapefile cleanup if specified
+                    if(action & action_cleanup)
+                        cleanup(filename, (action & action_output ? output.c_str() : NULL));
                     
                     // Perform subtraction if specified
                     if(action & action_subtract)
