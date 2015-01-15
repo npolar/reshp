@@ -39,6 +39,7 @@ namespace reshp
                 reshp::polygon poly(*shp.records[i].polygon);
                 unsigned index = polys.size(), outer_rings = 0;
                 
+                /*
                 // Remove self-intersecting polygons
                 if(poly.intersects())
                 {
@@ -47,6 +48,7 @@ namespace reshp
                     
                     continue;
                 }
+                */
                 
                 // Add missing segments for polygon rings
                 for(unsigned r = 0; r < poly.rings.size(); ++r)
@@ -109,6 +111,7 @@ namespace reshp
 
         if(outputfile)
         {
+            reshp::aabb aabb;
             reshp::shp output;
             
             for(unsigned p = 0; p < polys.size(); ++p)
@@ -120,14 +123,19 @@ namespace reshp
                     record.shape = record.polygon; // Automatically deallocates record.polygon on output dtor
                     record.type = reshp::shp::shape::polygon;
                     
-                    polys[p].calculate_aabb();
                     polys[p] >> *record.polygon;
-                    polys[p].aabb >> output.header.box;
-                    output.header.type = reshp::shp::shape::polygon;
+                    
+                    aabb.min.x = std::min(aabb.min.x, polys[p].aabb.min.x);
+                    aabb.min.y = std::min(aabb.min.y, polys[p].aabb.min.y);
+                    aabb.max.x = std::max(aabb.max.x, polys[p].aabb.max.x);
+                    aabb.max.y = std::max(aabb.max.y, polys[p].aabb.max.y);
                     
                     output.records.push_back(record);
                 }
             }
+            
+            aabb >> output.header.box;
+            output.header.type = reshp::shp::shape::polygon;
             
             if(output.save(outputfile, verbose_))
             {

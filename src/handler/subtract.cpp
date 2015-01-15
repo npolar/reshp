@@ -186,6 +186,7 @@ namespace reshp
         
         if(outputfile)
         {
+            reshp::aabb aabb;
             reshp::shp output;
             
             for(unsigned p = 0; p < basepolys.size(); ++p)
@@ -197,14 +198,19 @@ namespace reshp
                     record.shape = record.polygon; // Automatically deallocates record.polygon on output dtor
                     record.type = reshp::shp::shape::polygon;
                     
-                    basepolys[p].calculate_aabb();
                     basepolys[p] >> *record.polygon;
-                    basepolys[p].aabb >> output.header.box;
-                    output.header.type = reshp::shp::shape::polygon;
+                    
+                    aabb.min.x = std::min(aabb.min.x, basepolys[p].aabb.min.x);
+                    aabb.min.y = std::min(aabb.min.y, basepolys[p].aabb.min.y);
+                    aabb.max.x = std::max(aabb.max.x, basepolys[p].aabb.max.x);
+                    aabb.max.y = std::max(aabb.max.y, basepolys[p].aabb.max.y);
                     
                     output.records.push_back(record);
                 }
             }
+            
+            aabb >> output.header.box;
+            output.header.type = reshp::shp::shape::polygon;
             
             if(output.save(outputfile, verbose_))
             {
