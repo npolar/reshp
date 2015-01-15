@@ -54,6 +54,7 @@ namespace reshp
             
             void calculate_aabb();
             bool contains(const reshp::point&) const;
+            void invert(); // Change direction (toggle inner/outer typed ring)
             bool inside(const reshp::polygon::ring&) const;
             bool intersects() const; // Self-intersection
             bool intersects(const reshp::polygon::ring&, std::vector<reshp::polygon::intersection>* intersections = NULL) const;

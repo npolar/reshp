@@ -16,6 +16,13 @@
 
 namespace reshp
 {
+    point::point(const reshp::point& other) :
+        x(other.x),
+        y(other.y),
+        z(other.z)
+    {
+    }
+    
     point::point(const double x, const double y, const double z) :
         x(x),
         y(y),

@@ -66,6 +66,15 @@ namespace reshp
         return inside;
     }
     
+    void polygon::ring::invert()
+    {
+        for(unsigned s = 0, c = segments.size(); s < c; ++s)
+            if(s != (c - 1 -s))
+                std::swap(segments[s], segments[c - 1 - s]);
+            
+        type = (type == inner ? outer : inner);
+    }
+    
     bool polygon::ring::inside(const reshp::polygon::ring& other) const
     {
         if(!aabb.inside(other.aabb))
