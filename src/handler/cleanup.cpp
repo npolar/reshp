@@ -37,11 +37,23 @@ namespace reshp
             if(shp.records[i].polygon)
             {
                 reshp::polygon poly(*shp.records[i].polygon);
-                unsigned index = polys.size();
+                unsigned index = polys.size(), outer_rings = 0;
+                
+                // Remove self-intersecting polygons
+                if(poly.intersects())
+                {
+                    if(verbose_)
+                        printf("    removed self-intersecting polygon (record #%u)\n", i);
+                    
+                    continue;
+                }
                 
                 // Add missing segments for polygon rings
                 for(unsigned r = 0; r < poly.rings.size(); ++r)
                 {
+                    if(poly.rings[r].type == reshp::polygon::ring::outer)
+                        outer_rings++;
+                    
                     if(poly.rings[r].segments.front().start != poly.rings[r].segments.back().end)
                     {
                         if(verbose_)
@@ -58,13 +70,30 @@ namespace reshp
                      */
                 }
                 
-                // Ensure outer ring for single-ringed polygons
-                if(poly.rings.size() == 1 && poly.rings.front().type != reshp::polygon::ring::outer)
+                for(unsigned r = 0; r < poly.rings.size(); ++r)
                 {
-                    if(verbose_)
-                        printf("    inverting ring direction for inner ring in polygon %u\n", index);
-                    
-                    poly.rings.front().invert();
+                    // Invert inner-rings not contained within an outer-ring
+                    if(poly.rings[r].type == reshp::polygon::ring::inner)
+                    {
+                        bool inside = false;
+                        
+                        for(unsigned o = 0; o < poly.rings.size(); ++o)
+                        {
+                            if(o != r && poly.rings[r].inside(poly.rings[o]))
+                            {
+                                inside = true;
+                                break;
+                            }
+                        }
+                        
+                        if(!inside)
+                        {
+                            if(verbose_)
+                                printf("    inverting inner-ring %u to outer-ring in polygon %u\n", r, index);
+                            
+                            poly.rings[r].invert();
+                        }
+                    }
                 }
                 
                 // Recalculate polygon bounding boxes
