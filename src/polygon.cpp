@@ -103,9 +103,6 @@ namespace reshp
         if(!aabb.intersects(other.aabb) && !other.aabb.intersects(aabb))
             return false;
         
-        if(intersections)
-            intersections->clear();
-        
         reshp::polygon::ring* mutable_this = const_cast<reshp::polygon::ring*>(this);
         reshp::polygon::ring* mutable_other = const_cast<reshp::polygon::ring*>(&other);
         reshp::polygon::intersection intersection(mutable_this, mutable_other);
@@ -130,10 +127,7 @@ namespace reshp
             }
         }
         
-        if(intersections && intersections->size())
-            return true;
-            
-        return false;
+        return (intersections ? (intersections->size() ? true : false) : false);
     }
         
     polygon::polygon()
@@ -251,19 +245,13 @@ namespace reshp
         if(!aabb.intersects(other.aabb) && !other.aabb.intersects(aabb))
             return false;
         
-        if(intersections)
-            intersections->clear();
-        
         for(unsigned tring = 0; tring < this->rings.size(); ++tring)
             for(unsigned oring = 0; oring < other.rings.size(); ++oring)
                 if(this->rings[tring].intersects(other.rings[oring], intersections))
                     if(!intersections)
                         return true;
         
-        if(intersections)
-            return intersections->size();
-        
-        return false;
+        return (intersections ? (intersections->size() ? true : false) : false);
     }
     
     void polygon::operator>> (reshp::shp::polygon& poly) const
